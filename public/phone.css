@@ -1,0 +1,599 @@
+/* ============================================
+   NexusAI — Phone Page Styles
+   ============================================ */
+
+/* ---------- Layout ---------- */
+.phone-layout {
+  display: grid;
+  grid-template-columns: 380px 1fr;
+  gap: 1.5rem;
+  padding: 80px 2rem 2rem;
+  min-height: 100vh;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ---------- Panels ---------- */
+.panel {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(111, 191, 115, 0.08);
+  padding: 1.5rem;
+}
+
+.panel__title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.panel__desc {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin-bottom: 1.2rem;
+}
+
+/* ---------- Sidebar ---------- */
+.phone-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+/* ---------- Setup panel ---------- */
+.input-group {
+  display: flex;
+  align-items: center;
+  background: var(--bg-dark);
+  border: 2px solid rgba(111, 191, 115, 0.15);
+  border-radius: 10px;
+  overflow: hidden;
+  transition: border-color var(--transition);
+}
+
+.input-group:focus-within {
+  border-color: var(--accent-green);
+}
+
+.input-prefix {
+  padding: 0 0.6rem 0 1rem;
+  color: var(--text-secondary);
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.input-phone {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  padding: 0.85rem 0.6rem;
+  outline: none;
+  font-family: var(--font);
+  letter-spacing: 0.5px;
+}
+
+.input-phone::placeholder {
+  color: rgba(168, 191, 160, 0.4);
+}
+
+.btn-connect {
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0.75rem;
+  background: var(--accent-green);
+  color: var(--bg-dark);
+  border: none;
+  border-radius: 10px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.btn-connect:hover {
+  background: #85d488;
+  transform: translateY(-1px);
+}
+
+.btn-connect:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.connect-status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.8rem;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ef4444;
+  transition: background var(--transition);
+}
+
+.connect-status.connected .status-dot {
+  background: var(--accent-green);
+  box-shadow: 0 0 8px rgba(111, 191, 115, 0.6);
+}
+
+.connect-status.connected .status-text {
+  color: var(--accent-green);
+}
+
+/* ---------- Dialpad panel ---------- */
+.dial-display {
+  display: flex;
+  align-items: center;
+  background: var(--bg-dark);
+  border-radius: 10px;
+  padding: 0.4rem;
+  margin-bottom: 1rem;
+}
+
+.dial-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  color: var(--text-primary);
+  font-size: 1.5rem;
+  font-weight: 600;
+  padding: 0.7rem 0.8rem;
+  outline: none;
+  font-family: var(--font);
+  letter-spacing: 2px;
+  text-align: center;
+}
+
+.dial-input::placeholder {
+  font-size: 0.95rem;
+  letter-spacing: 0;
+  color: rgba(168, 191, 160, 0.35);
+}
+
+.dial-clear {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 1.4rem;
+  cursor: pointer;
+  padding: 0.5rem 0.8rem;
+  border-radius: 8px;
+  transition: color var(--transition), background var(--transition);
+}
+
+.dial-clear:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dialpad {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.6rem;
+}
+
+.dialpad__key {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0.9rem 0;
+  background: var(--bg-medium);
+  border: 1px solid rgba(111, 191, 115, 0.06);
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+}
+
+.dialpad__key:hover {
+  background: var(--bg-light);
+  transform: scale(1.04);
+}
+
+.dialpad__key:active {
+  transform: scale(0.96);
+  background: var(--accent-green);
+}
+
+.dialpad__key:active .key-num {
+  color: var(--bg-dark);
+}
+
+.key-num {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.key-sub {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  letter-spacing: 2px;
+  margin-top: 2px;
+}
+
+/* ---------- Call buttons ---------- */
+.dial-actions {
+  margin-top: 1rem;
+  display: flex;
+  gap: 0.8rem;
+}
+
+.btn-call {
+  flex: 1;
+  padding: 0.9rem;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+}
+
+.btn-call--start {
+  background: linear-gradient(135deg, var(--accent-green), #4a9e4e);
+  color: var(--bg-dark);
+}
+
+.btn-call--start:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(111, 191, 115, 0.4);
+}
+
+.btn-call--start:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.btn-call--end {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+}
+
+.btn-call--end:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ---------- Active call ---------- */
+.call-panel {
+  margin-bottom: 1.5rem;
+}
+
+.call-active {
+  text-align: center;
+  padding: 2rem 1rem;
+}
+
+.call-active__avatar {
+  font-size: 3.5rem;
+  margin-bottom: 1rem;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+}
+
+.call-active__number {
+  font-size: 1.6rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.call-active__status {
+  color: var(--accent-green);
+  font-size: 0.9rem;
+  margin-bottom: 0.3rem;
+}
+
+.call-active__timer {
+  font-size: 2rem;
+  font-weight: 300;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 2px;
+  margin-bottom: 1.5rem;
+}
+
+.call-active__controls {
+  display: flex;
+  justify-content: center;
+  gap: 1.2rem;
+}
+
+.call-ctrl {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.8rem 1.2rem;
+  background: var(--bg-medium);
+  border: 1px solid rgba(111, 191, 115, 0.08);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background var(--transition), transform var(--transition);
+  color: var(--text-primary);
+}
+
+.call-ctrl span {
+  font-size: 1.5rem;
+}
+
+.call-ctrl small {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.call-ctrl:hover {
+  background: var(--bg-light);
+  transform: translateY(-2px);
+}
+
+.call-ctrl.active {
+  background: var(--accent-green);
+  color: var(--bg-dark);
+}
+
+.call-ctrl.active small {
+  color: var(--bg-dark);
+}
+
+.call-ctrl--end {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.2);
+}
+
+.call-ctrl--end:hover {
+  background: #ef4444;
+  color: white;
+}
+
+.call-ctrl--end:hover small {
+  color: white;
+}
+
+/* ---------- AI Summary ---------- */
+.ai-summary {
+  border-top: 1px solid rgba(111, 191, 115, 0.08);
+  padding-top: 1.2rem;
+  margin-top: 1rem;
+}
+
+.ai-summary h4 {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+  color: var(--accent-green);
+}
+
+.ai-summary__text {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-style: italic;
+}
+
+/* ---------- Incoming call ---------- */
+.incoming-call {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+
+.incoming-call__card {
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  padding: 3rem 2.5rem;
+  text-align: center;
+  position: relative;
+  border: 1px solid rgba(111, 191, 115, 0.15);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.incoming-call__pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(111, 191, 115, 0.15);
+  transform: translate(-50%, -70%);
+  animation: ring-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ring-pulse {
+  0% { transform: translate(-50%, -70%) scale(0.8); opacity: 1; }
+  100% { transform: translate(-50%, -70%) scale(1.8); opacity: 0; }
+}
+
+.incoming-call__avatar {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  position: relative;
+  z-index: 1;
+}
+
+.incoming-call__number {
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin-bottom: 0.3rem;
+}
+
+.incoming-call__card p {
+  color: var(--accent-green);
+  font-size: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+
+.incoming-call__actions {
+  display: flex;
+  gap: 1rem;
+}
+
+/* ---------- Call history ---------- */
+.history-panel {
+  flex: 1;
+}
+
+.history-list {
+  max-height: calc(100vh - 240px);
+  overflow-y: auto;
+}
+
+.history-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--text-secondary);
+}
+
+.history-empty__icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 0.8rem;
+}
+
+.history-empty p {
+  font-size: 1rem;
+  margin-bottom: 0.3rem;
+}
+
+.history-empty small {
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+.history-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  transition: background var(--transition);
+  cursor: pointer;
+}
+
+.history-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.history-item + .history-item {
+  border-top: 1px solid rgba(111, 191, 115, 0.05);
+}
+
+.history-item__icon {
+  font-size: 1.3rem;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-medium);
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.history-item__icon--outgoing {
+  color: var(--accent-green);
+}
+
+.history-item__icon--incoming {
+  color: #60a5fa;
+}
+
+.history-item__icon--missed {
+  color: #ef4444;
+}
+
+.history-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.history-item__number {
+  font-weight: 600;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item__meta {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.history-item__duration {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* ---------- Navbar active link ---------- */
+.navbar__link--active {
+  color: var(--accent-green) !important;
+  font-weight: 600;
+}
+
+.navbar__brand-link {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-decoration: none;
+  color: inherit;
+}
+
+/* ---------- Scrollbar ---------- */
+.history-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.history-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.history-list::-webkit-scrollbar-thumb {
+  background: rgba(111, 191, 115, 0.15);
+  border-radius: 3px;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 768px) {
+  .phone-layout {
+    grid-template-columns: 1fr;
+    padding: 80px 1rem 1rem;
+  }
+
+  .dial-input {
+    font-size: 1.2rem;
+  }
+
+  .call-active__timer {
+    font-size: 1.6rem;
+  }
+}
