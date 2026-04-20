@@ -1,6 +1,7 @@
 const {
   getOrCreateSession,
-  buildSessionId
+  buildSessionId,
+  updateSession
 } = require("../services/inboundSessionService");
 
 const messageRepository = require("../repositories/messageRepository");
@@ -40,8 +41,24 @@ async function handleInbound(req, res) {
       sessionId,
       sender: "bot",
       message: result.reply,
-      detectedIntent: result.classification.intent,
+      detectedIntent: result.classification?.intent || null,
       step: "agent_response"
+    });
+
+    await updateSession(channel, userId, {
+      currentStep: "agent_response",
+      collectedData: {
+        lastIntent: result.classification?.intent || null,
+        lastConfidence:
+          Number.isFinite(Number(result.classification?.confidence))
+            ? Number(result.classification.confidence)
+            : 0,
+        lastChannel: channel,
+        lastEscalate: !!result.escalate,
+        lastEscalationReason: result.escalationReason || null,
+        lastActionsExecuted: result.actionsExecuted || [],
+        metadata: metadata || {}
+      }
     });
 
     return res.json({

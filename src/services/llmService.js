@@ -27,7 +27,12 @@ const ALLOWED_SERVICE_TYPES = [
   "unknown"
 ];
 
-const ALLOWED_URGENCY = ["alta", "media", "baja", "unknown"];
+const ALLOWED_URGENCY = [
+  "alta",
+  "media",
+  "baja",
+  "unknown"
+];
 
 async function detectIntentWithLLM({
   message,
@@ -36,6 +41,11 @@ async function detectIntentWithLLM({
   currentStep = "inicio"
 }) {
   try {
+    if (!process.env.OPENROUTER_API_KEY) {
+      console.error("Falta OPENROUTER_API_KEY en .env");
+      return fallbackResult();
+    }
+
     const model = process.env.OPENROUTER_MODEL || "openai/gpt-4.1-mini";
 
     const completion = await client.chat.completions.create({
@@ -48,7 +58,7 @@ async function detectIntentWithLLM({
           content: `
 Eres un clasificador de intención para un sistema de atención al cliente multicanal.
 
-Devuelve SOLO JSON válido con este formato exacto:
+Debes analizar el mensaje y devolver SOLO JSON válido con este formato exacto:
 
 {
   "intent": "productos | materiales | instalaciones | horario | ubicacion | contacto | menu | unknown",
@@ -62,10 +72,15 @@ Reglas:
 - "materiales" = el usuario quiere comprar, consultar o pedir piezas, materiales, repuestos o stock.
 - "instalaciones" = averías, fugas, reparaciones, montaje, mantenimiento o problemas técnicos.
 - "contacto" = el usuario pide llamada, contacto, presupuesto o que le respondan.
-- "urgency" será alta si hay fuga, rotura, avería grave o algo urgente.
-- "replyMode" será "clarify" si el mensaje es ambiguo.
-- No escribas nada fuera del JSON.
-- Si no lo tienes claro usa "unknown".
+- "horario" = pregunta por apertura, cierre, horas o disponibilidad general.
+- "ubicacion" = pregunta por dirección, localización o dónde está la empresa.
+- "productos" = pregunta por productos en general.
+- "menu" = quiere ver opciones o ayuda general.
+- "urgency" será "alta" si hay fuga, rotura, avería grave o emergencia.
+- "replyMode" será "clarify" si el mensaje es ambiguo o no se entiende bien.
+- No escribas texto fuera del JSON.
+- Si no lo tienes claro, usa "unknown".
+- confidence debe ser un número entre 0 y 1.
 `.trim()
         },
         {
@@ -81,30 +96,33 @@ Reglas:
     });
 
     const raw = completion?.choices?.[0]?.message?.content?.trim();
-    if (!raw) return fallbackResult();
+
+    if (!raw) {
+      console.error("La IA no devolvió contenido");
+      return fallbackResult();
+    }
 
     let parsed;
     try {
       parsed = JSON.parse(raw);
-    } catch {
+    } catch (error) {
+      console.error("Error parseando JSON de IA:", raw);
       return fallbackResult();
     }
 
-    const intent = ALLOWED_INTENTS.includes(parsed.intent) ? parsed.intent : "unknown";
+    const intent = ALLOWED_INTENTS.includes(parsed.intent)
+      ? parsed.intent
+      : "unknown";
+
     const serviceType = ALLOWED_SERVICE_TYPES.includes(parsed.serviceType)
       ? parsed.serviceType
       : "unknown";
+
     const urgency = ALLOWED_URGENCY.includes(parsed.urgency)
       ? parsed.urgency
       : "unknown";
 
-    const parsedConfidence = Number(parsed.confidence);
-    const confidence =
-      !Number.isNaN(parsedConfidence) &&
-      parsedConfidence >= 0 &&
-      parsedConfidence <= 1
-        ? parsedConfidence
-        : 0;
+    const confidence = normalizeConfidence(parsed.confidence, 0);
 
     const replyMode =
       parsed.replyMode === "normal" || parsed.replyMode === "clarify"
@@ -123,6 +141,16 @@ Reglas:
     console.error("Error en detectIntentWithLLM:", error?.message || error);
     return fallbackResult();
   }
+}
+
+function normalizeConfidence(value, fallback = 0) {
+  const num = Number(value);
+
+  if (!Number.isFinite(num)) return fallback;
+  if (num < 0) return 0;
+  if (num > 1) return 1;
+
+  return num;
 }
 
 function fallbackResult() {

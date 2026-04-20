@@ -24,6 +24,18 @@ async function getResponse(classification) {
         actions: ["create_service_request"]
       };
 
+    case "materiales":
+      return {
+        text: "Puedo ayudarte con consultas sobre materiales o repuestos. Si quieres, también puedo dejar registrada tu consulta.",
+        actions: []
+      };
+
+    case "productos":
+      return {
+        text: "Puedo ayudarte con información sobre productos. Si quieres, también puedo registrar tu consulta.",
+        actions: []
+      };
+
     default:
       return {
         text: "No he entendido del todo la consulta. Puedo ayudarte con horario, ubicación, contacto o servicios.",

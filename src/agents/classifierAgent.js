@@ -25,6 +25,11 @@ function mapToAgentIntent(rawIntent) {
   }
 }
 
+function normalizeConfidence(value, fallback = 0) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
 async function detect(message = "", options = {}) {
   const text = String(message).toLowerCase().trim();
   const { channel = "web", subject = "", currentStep = "inicio" } = options;
@@ -100,21 +105,23 @@ async function detect(message = "", options = {}) {
   });
 
   const mappedIntent = mapToAgentIntent(llmResult.intent);
+  const confidence = normalizeConfidence(llmResult.confidence, 0);
+
   const requiresHuman =
     llmResult.intent === "unknown" ||
     llmResult.replyMode === "clarify" ||
-    llmResult.confidence < 0.55;
+    confidence < 0.55;
 
   return {
     intent: mappedIntent,
-    confidence: llmResult.confidence,
+    confidence,
     requiresHuman,
     extractedData: {
-      originalIntent: llmResult.intent,
-      serviceType: llmResult.serviceType,
-      urgency: llmResult.urgency,
-      replyMode: llmResult.replyMode,
-      source: llmResult.source
+      originalIntent: llmResult.intent || "unknown",
+      serviceType: llmResult.serviceType || "unknown",
+      urgency: llmResult.urgency || "unknown",
+      replyMode: llmResult.replyMode || "clarify",
+      source: llmResult.source || "fallback"
     }
   };
 }
