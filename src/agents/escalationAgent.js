@@ -30,7 +30,7 @@ function shouldEscalate(classification, context = {}) {
     };
   }
 
-  const confidence = classification.confidence || 0;
+  const confidence = Number(classification.confidence || 0);
   const intent = classification.intent || "desconocido";
   const urgency = classification?.extractedData?.urgency || "unknown";
   const replyMode = classification?.extractedData?.replyMode || "clarify";

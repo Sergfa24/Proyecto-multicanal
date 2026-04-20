@@ -4,6 +4,7 @@ const express = require("express");
 const inboundRoutes = require("./routes/inboundRoutes");
 const healthRoutes = require("./routes/healthRoutes");
 const voiceRoutes = require("./routes/voiceRoutes");
+const adminRoutes = require("./routes/adminRoutes");
 
 require("../db/database");
 
@@ -16,6 +17,7 @@ app.use(express.static("public"));
 app.use("/api/health", healthRoutes);
 app.use("/api/inbound", inboundRoutes);
 app.use("/api/voice", voiceRoutes);
+app.use("/api/admin", adminRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
