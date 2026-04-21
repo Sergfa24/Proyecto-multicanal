@@ -53,6 +53,28 @@
 .inbox-search__input::placeholder { color: var(--text-secondary); opacity: 0.6; }
 .inbox-search__input:focus { outline: none; border-color: var(--accent-green); }
 
+.gmail-connect-banner {
+  padding: 1rem 1.2rem;
+  text-align: center;
+  border-bottom: 1px solid rgba(111, 191, 115, 0.08);
+}
+.gmail-connect-banner p { font-size: 0.82rem; color: var(--text-secondary); margin-bottom: 0.6rem; }
+.btn-connect-gmail {
+  background: linear-gradient(135deg, var(--accent-green), #4a9e4e);
+  color: var(--bg-dark); border: none; border-radius: 8px;
+  padding: 0.5rem 1.2rem; font-family: var(--font); font-size: 0.85rem;
+  font-weight: 700; cursor: pointer;
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+.btn-connect-gmail:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(111,191,115,0.3); }
+.gmail-connected-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0.5rem 1.2rem; font-size: 0.8rem; color: var(--accent-green);
+  background: rgba(111,191,115,0.05);
+  border-bottom: 1px solid rgba(111, 191, 115, 0.08);
+}
+.gmail-connect-banner.hidden, .gmail-connected-bar.hidden { display: none; }
+
 .inbox-tabs {
   display: flex; padding: 0 1.2rem; gap: 0.25rem;
   border-bottom: 1px solid rgba(111, 191, 115, 0.08);

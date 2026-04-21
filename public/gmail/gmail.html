@@ -48,6 +48,15 @@
         <svg class="inbox-search__icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
         <input type="text" id="searchInput" class="inbox-search__input" placeholder="Buscar correos..." />
       </div>
+      <!-- Banner de conexión Gmail -->
+      <div class="gmail-connect-banner hidden" id="connectBanner">
+        <p>Conecta tu cuenta de Gmail para ver tus correos reales</p>
+        <button class="btn-connect-gmail" id="btnConnectGmail">📧 Conectar Gmail</button>
+      </div>
+      <div class="gmail-connected-bar hidden" id="connectedBar">
+        <span>📧 <span id="connectedEmail"></span></span>
+        <button class="btn-icon" id="btnDisconnect" title="Desconectar">✕</button>
+      </div>
       <div class="inbox-tabs">
         <button class="inbox-tab active" data-tab="all">Todos</button>
         <button class="inbox-tab" data-tab="unread">No leídos</button>
