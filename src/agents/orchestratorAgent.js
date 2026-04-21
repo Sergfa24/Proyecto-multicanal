@@ -72,7 +72,13 @@ async function process({ sessionId, channel, userId, message, metadata = {} }) {
 
     actionsExecuted.push("escalated_to_human");
   } else {
-    const knowledge = await knowledgeAgent.getResponse(classification);
+    const knowledge = await knowledgeAgent.getResponse({
+      classification,
+      channel,
+      message,
+      context
+    });
+
     replyText = knowledge.text;
 
     actionsExecuted = await actionAgent.execute({
