@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAI — Crear cuenta</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="auth.css" />
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar">
+    <div class="navbar__brand">
+      <a href="../index.html" class="navbar__brand-link">
+        <span class="navbar__logo">⬡</span>
+        <span class="navbar__name">NexusAI</span>
+      </a>
+    </div>
+    <ul class="navbar__links">
+      <li><a href="../index.html">Inicio</a></li>
+    </ul>
+  </nav>
+
+  <!-- ========== AUTH FORM ========== -->
+  <main class="auth-page">
+    <div class="auth-card">
+      <div class="auth-card__header">
+        <span class="auth-card__logo">⬡</span>
+        <h1>Crear cuenta</h1>
+        <p>Únete a NexusAI y conecta todos tus canales</p>
+      </div>
+
+      <form class="auth-form" id="registerForm">
+        <div class="form-group">
+          <label for="name">Nombre</label>
+          <input type="text" id="name" name="name" placeholder="Tu nombre" required />
+        </div>
+
+        <div class="form-group">
+          <label for="email">Email</label>
+          <input type="email" id="email" name="email" placeholder="tu@email.com" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Contraseña</label>
+          <div class="password-wrapper">
+            <input type="password" id="password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6" />
+            <button type="button" class="password-toggle" id="togglePassword">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="confirmPassword">Confirmar contraseña</label>
+          <input type="password" id="confirmPassword" name="confirmPassword" placeholder="Repite la contraseña" required />
+        </div>
+
+        <div class="form-error hidden" id="formError"></div>
+
+        <button type="submit" class="btn-auth" id="btnRegister">
+          <span class="btn-auth__text">Crear cuenta</span>
+          <span class="btn-auth__loader hidden" id="btnLoader"></span>
+        </button>
+      </form>
+
+      <div class="auth-card__footer">
+        <p>¿Ya tienes cuenta? <a href="login.html">Inicia sesión</a></p>
+      </div>
+    </div>
+  </main>
+
+  <script src="auth.js"></script>
+</body>
+</html>

@@ -5,6 +5,8 @@ const inboundRoutes = require("./routes/inboundRoutes");
 const healthRoutes = require("./routes/healthRoutes");
 const voiceRoutes = require("./routes/voiceRoutes");
 const adminRoutes = require("./routes/adminRoutes");
+const authRoutes = require("./routes/authRoutes");
+const { initMySQL } = require("../db/mysql");
 
 require("../db/database");
 
@@ -18,6 +20,7 @@ app.use("/api/health", healthRoutes);
 app.use("/api/inbound", inboundRoutes);
 app.use("/api/voice", voiceRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/auth", authRoutes);
 
 app.use((req, res) => {
   res.status(404).json({
@@ -36,6 +39,7 @@ app.use((err, req, res, next) => {
 
 const PORT = process.env.PORT || 3000;
 
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`Servidor iniciado en http://localhost:${PORT}`);
+  await initMySQL();
 });
