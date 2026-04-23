@@ -303,26 +303,52 @@
     }
   }
 
+  // === AI API call ===
+  async function callAiEmail(action, userMessage) {
+    if (!token) {
+      addAiBotMsg("Inicia sesión para usar la IA.");
+      return;
+    }
+    var emailData = {};
+    if (selectedEmail) {
+      emailData = {
+        emailBody: selectedEmail.body || selectedEmail.preview,
+        emailSubject: selectedEmail.subject,
+        emailFrom: selectedEmail.sender + " <" + selectedEmail.email + ">",
+      };
+    }
+    addTypingIndicator();
+    try {
+      var res = await fetch("/api/ai/email", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify(Object.assign({ action: action, userMessage: userMessage }, emailData)),
+      });
+      removeTypingIndicator();
+      var data = await res.json();
+      if (data.ok) {
+        addAiBotMsg(data.response);
+      } else {
+        addAiBotMsg("⚠️ " + (data.error || "Error al procesar con IA"));
+      }
+    } catch (err) {
+      removeTypingIndicator();
+      addAiBotMsg("⚠️ Error de conexión con la IA.");
+      console.error("AI error:", err);
+    }
+  }
+
   // === Email actions ===
   function handleEmailAction(action, email) {
     if (action === "reply") { openCompose("Re: " + email.subject, email.email); }
     else if (action === "forward") { openCompose("Fwd: " + email.subject, ""); }
     else if (action === "ai-summarize") {
       addAiUserMsg("Resume este correo de " + email.sender + ": \"" + email.subject + "\"");
-      simulateAiResponse(
-        "📌 <strong>Tema:</strong> " + email.subject +
-        "<br>👤 <strong>De:</strong> " + email.sender + " (" + email.email + ")" +
-        "<br>📅 <strong>Fecha:</strong> " + email.date +
-        "<br><br>📝 <strong>Resumen:</strong> " + email.preview +
-        "<br><br>¿Quieres que redacte una respuesta?"
-      );
+      callAiEmail("summarize");
     }
     else if (action === "ai-reply") {
       addAiUserMsg("Sugiere una respuesta para el correo de " + email.sender);
-      simulateAiResponse(
-        "Aquí tienes una sugerencia de respuesta:<br><br>---<br>Hola " + email.sender.split(" ")[0] +
-        ",<br><br>Gracias por tu mensaje. He revisado el contenido y me parece bien. Quedo pendiente para cualquier aclaración adicional.<br><br>Un saludo.<br>---<br><br>¿Quieres que la modifique o la envíe directamente?"
-      );
+      callAiEmail("reply");
     }
   }
 
@@ -401,12 +427,34 @@
     }
   });
 
-  btnComposeAi.addEventListener("click", function () {
+  btnComposeAi.addEventListener("click", async function () {
     var subject = document.getElementById("composeSubject").value;
-    var body = document.getElementById("composeBody");
-    body.value = "Hola,\n\nGracias por ponerte en contacto. He revisado tu mensaje" +
-      (subject ? " sobre \"" + subject + "\"" : "") +
-      " y me gustaría comentarte lo siguiente:\n\n[La IA generará aquí una respuesta personalizada]\n\nQuedo a tu disposición para cualquier consulta.\n\nUn saludo.";
+    var bodyEl = document.getElementById("composeBody");
+    var to = document.getElementById("composeTo").value;
+
+    if (!token) { bodyEl.value = "Inicia sesión para usar la IA."; return; }
+
+    bodyEl.value = "Generando borrador con IA...";
+    btnComposeAi.disabled = true;
+
+    try {
+      var res = await fetch("/api/ai/email", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({
+          action: "chat",
+          userMessage: "Redacta un email profesional en español" +
+            (to ? " dirigido a " + to : "") +
+            (subject ? " sobre: " + subject : "") +
+            ". Solo el cuerpo del email, sin asunto ni cabeceras.",
+        }),
+      });
+      var data = await res.json();
+      bodyEl.value = data.ok ? data.response : "Error al generar borrador.";
+    } catch (err) {
+      bodyEl.value = "Error de conexión con la IA.";
+    }
+    btnComposeAi.disabled = false;
   });
 
   // === AI Chat helpers ===
@@ -444,11 +492,6 @@
     return text.replace(/\n/g, "<br>").replace(/---/g, "<hr style='border-color:rgba(111,191,115,0.15);margin:0.5rem 0;'>");
   }
 
-  function simulateAiResponse(text) {
-    addTypingIndicator();
-    setTimeout(function () { removeTypingIndicator(); addAiBotMsg(text); }, 1200 + Math.random() * 800);
-  }
-
   // === AI send message ===
   function sendAiMessage() {
     var text = aiInput.value.trim();
@@ -456,40 +499,33 @@
     addAiUserMsg(text);
     aiInput.value = "";
     var lower = text.toLowerCase();
-    var response;
 
+    // Detect intent and route to appropriate AI action
     if (lower.includes("resum")) {
       if (selectedEmail) {
-        response = "📝 <strong>Resumen del correo seleccionado:</strong><br><br>De: " + selectedEmail.sender +
-          "<br>Asunto: " + selectedEmail.subject + "<br><br>" + selectedEmail.preview +
-          "<br><br>¿Necesitas algo más sobre este correo?";
+        callAiEmail("summarize", text);
       } else {
-        response = "No tienes ningún correo seleccionado. Haz clic en un correo de la bandeja de entrada y luego pídeme que lo resuma.";
+        addAiBotMsg("No tienes ningún correo seleccionado. Haz clic en un correo de la bandeja y pídeme que lo resuma.");
       }
     }
     else if (lower.includes("clasific") || lower.includes("organiz")) {
-      var summary = emails.slice(0, 5).map(function (e, i) {
-        var icon = e.unread ? "�" : "⚪";
-        return icon + " " + e.sender + ": " + e.subject;
-      }).join("<br>");
-      response = "He analizado tu bandeja:<br><br>" + summary + "<br><br>¿Quieres que mueva alguno a una carpeta o etiqueta?";
-    }
-    else if (lower.includes("responder") || lower.includes("respuesta") || lower.includes("reply")) {
       if (selectedEmail) {
-        response = "Borrador de respuesta para " + selectedEmail.sender + ":<br><br>---<br>Hola " +
-          selectedEmail.sender.split(" ")[0] + ",<br><br>Gracias por tu mensaje. Lo he revisado y estoy de acuerdo con lo que planteas.<br><br>Un saludo.<br>---<br><br>¿La envío, la edito o la abro en el editor?";
+        callAiEmail("classify", text);
       } else {
-        response = "Selecciona primero un correo para que pueda sugerirte una respuesta.";
+        addAiBotMsg("Selecciona un correo para que pueda clasificarlo.");
       }
     }
-    else if (lower.includes("hola") || lower.includes("hey") || lower.includes("buenas")) {
-      response = "¡Hola! ¿En qué puedo ayudarte? Puedo resumir correos, clasificar tu bandeja, o sugerir respuestas.";
+    else if (lower.includes("responder") || lower.includes("respuesta") || lower.includes("reply") || lower.includes("redact")) {
+      if (selectedEmail) {
+        callAiEmail("reply", text);
+      } else {
+        addAiBotMsg("Selecciona primero un correo para que pueda sugerirte una respuesta.");
+      }
     }
     else {
-      response = "Puedo ayudarte con:<br><br>• <strong>Resumir</strong> un correo seleccionado<br>• <strong>Clasificar</strong> tu bandeja de entrada<br>• <strong>Redactar</strong> o sugerir respuestas<br>• <strong>Buscar</strong> información en tus correos<br><br>¿Qué necesitas?";
+      // General chat — send with email context if available
+      callAiEmail("chat", text);
     }
-
-    simulateAiResponse(response);
   }
 
   btnSendAi.addEventListener("click", sendAiMessage);

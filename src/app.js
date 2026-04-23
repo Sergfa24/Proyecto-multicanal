@@ -7,6 +7,7 @@ const voiceRoutes = require("./routes/voiceRoutes");
 const adminRoutes = require("./routes/adminRoutes");
 const authRoutes = require("./routes/authRoutes");
 const gmailRoutes = require("./routes/gmailRoutes");
+const aiRoutes = require("./routes/aiRoutes");
 const { initMySQL } = require("../db/mysql");
 
 require("../db/database");
@@ -23,6 +24,7 @@ app.use("/api/voice", voiceRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/gmail", gmailRoutes);
+app.use("/api/ai", aiRoutes);
 
 app.use((req, res) => {
   res.status(404).json({

@@ -156,10 +156,26 @@
           </div>
         </div>
 
-        <!-- AI Summary (future) -->
-        <div class="ai-summary" id="aiSummary">
-          <h4>🤖 Resumen IA</h4>
-          <p class="ai-summary__text">El resumen de la llamada aparecerá aquí cuando la IA esté integrada...</p>
+      </div>
+
+      <!-- AI Chatbox for calls -->
+      <div class="panel ai-panel">
+        <h2 class="panel__title">🤖 Asistente IA — Llamadas</h2>
+        <div class="ai-chat">
+          <div class="ai-messages" id="aiMessages">
+            <div class="ai-msg ai-msg--bot">
+              <div class="ai-msg__avatar">🤖</div>
+              <div class="ai-msg__bubble">¡Hola! Soy tu asistente de telefonía. Puedo ayudarte a analizar llamadas, resumir conversaciones o darte información sobre tu historial. Selecciona una llamada del historial o pregúntame algo.</div>
+            </div>
+          </div>
+          <div class="ai-quick-actions">
+            <button class="ai-quick-btn" data-action="summarize">📝 Resumir</button>
+            <button class="ai-quick-btn" data-action="analyze">📊 Analizar</button>
+          </div>
+          <div class="ai-input-row">
+            <input type="text" class="ai-input" id="aiInput" placeholder="Pregunta algo sobre tus llamadas..." />
+            <button class="ai-send" id="btnSendAi">➤</button>
+          </div>
         </div>
       </div>
 

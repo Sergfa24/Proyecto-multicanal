@@ -335,4 +335,122 @@
     historyList.innerHTML = html;
   }
 
+  // ========== AI CHATBOX ==========
+  var aiMessages   = document.getElementById("aiMessages");
+  var aiInput      = document.getElementById("aiInput");
+  var btnSendAi    = document.getElementById("btnSendAi");
+  var quickActions = document.querySelectorAll(".ai-quick-btn");
+  var token        = localStorage.getItem("token");
+  var selectedCall = null;
+
+  function aiAuthHeaders() {
+    return { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
+  }
+
+  function addAiUserMsg(text) {
+    var div = document.createElement("div");
+    div.className = "ai-msg ai-msg--user";
+    div.innerHTML = '<div class="ai-msg__avatar">Tú</div><div class="ai-msg__bubble">' + text + '</div>';
+    aiMessages.appendChild(div);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+  }
+
+  function addAiBotMsg(text) {
+    var div = document.createElement("div");
+    div.className = "ai-msg ai-msg--bot";
+    div.innerHTML = '<div class="ai-msg__avatar">🤖</div><div class="ai-msg__bubble">' + text.replace(/\n/g, "<br>") + '</div>';
+    aiMessages.appendChild(div);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+  }
+
+  function addTypingIndicator() {
+    var div = document.createElement("div");
+    div.className = "ai-msg ai-msg--bot ai-msg--typing";
+    div.id = "typingIndicator";
+    div.innerHTML = '<div class="ai-msg__avatar">🤖</div><div class="ai-msg__bubble"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div>';
+    aiMessages.appendChild(div);
+    aiMessages.scrollTop = aiMessages.scrollHeight;
+  }
+
+  function removeTypingIndicator() {
+    var el = document.getElementById("typingIndicator");
+    if (el) el.remove();
+  }
+
+  // Build call context from last call or selected history item
+  function getCallContext() {
+    if (selectedCall) return selectedCall;
+    if (callHistory.length > 0) {
+      var last = callHistory[0];
+      return {
+        from: last.type === "incoming" ? last.number : phoneInput.value,
+        to: last.type === "outgoing" ? last.number : phoneInput.value,
+        duration: Math.floor(last.duration / 60) + "m " + (last.duration % 60) + "s",
+        status: last.type,
+        date: last.time.toLocaleString("es-ES"),
+      };
+    }
+    return null;
+  }
+
+  async function callAiPhone(action, userMessage) {
+    if (!token) {
+      addAiBotMsg("Inicia sesión para usar la IA.");
+      return;
+    }
+    addTypingIndicator();
+    try {
+      var res = await fetch("/api/ai/call", {
+        method: "POST",
+        headers: aiAuthHeaders(),
+        body: JSON.stringify({
+          action: action,
+          callData: getCallContext(),
+          userMessage: userMessage,
+        }),
+      });
+      removeTypingIndicator();
+      var data = await res.json();
+      if (data.ok) {
+        addAiBotMsg(data.response);
+      } else {
+        addAiBotMsg("⚠️ " + (data.error || "Error al procesar con IA"));
+      }
+    } catch (err) {
+      removeTypingIndicator();
+      addAiBotMsg("⚠️ Error de conexión con la IA.");
+    }
+  }
+
+  function sendAiMessage() {
+    var text = aiInput.value.trim();
+    if (!text) return;
+    addAiUserMsg(text);
+    aiInput.value = "";
+    var lower = text.toLowerCase();
+
+    if (lower.includes("resum")) {
+      if (getCallContext()) { callAiPhone("summarize", text); }
+      else { addAiBotMsg("No hay llamadas en el historial para resumir."); }
+    }
+    else if (lower.includes("anali")) {
+      if (getCallContext()) { callAiPhone("analyze", text); }
+      else { addAiBotMsg("Realiza o recibe una llamada para que pueda analizarla."); }
+    }
+    else {
+      callAiPhone("chat", text);
+    }
+  }
+
+  if (btnSendAi) btnSendAi.addEventListener("click", sendAiMessage);
+  if (aiInput) aiInput.addEventListener("keydown", function (e) { if (e.key === "Enter") sendAiMessage(); });
+  quickActions.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      var action = btn.dataset.action;
+      if (action === "summarize") aiInput.value = "Resume la última llamada";
+      else if (action === "analyze") aiInput.value = "Analiza la última llamada";
+      sendAiMessage();
+    });
+  });
+
 })();
