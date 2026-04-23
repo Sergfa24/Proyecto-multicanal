@@ -117,4 +117,66 @@ const me = async (req, res) => {
   }
 };
 
-module.exports = { register, login, me };
+const updateProfile = async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ ok: false, error: "El nombre es obligatorio" });
+    }
+    await pool.query("UPDATE users SET name = ? WHERE id = ?", [name.trim(), req.user.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error actualizando perfil:", err);
+    res.status(500).json({ ok: false, error: "Error interno del servidor" });
+  }
+};
+
+const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ ok: false, error: "Contraseña actual y nueva son obligatorias" });
+    }
+    if (newPassword.length < 6) {
+      return res.status(400).json({ ok: false, error: "La nueva contraseña debe tener al menos 6 caracteres" });
+    }
+
+    const [rows] = await pool.query("SELECT password FROM users WHERE id = ?", [req.user.id]);
+    if (rows.length === 0) return res.status(404).json({ ok: false, error: "Usuario no encontrado" });
+
+    const valid = await bcrypt.compare(currentPassword, rows[0].password);
+    if (!valid) return res.status(401).json({ ok: false, error: "Contraseña actual incorrecta" });
+
+    const hashed = await bcrypt.hash(newPassword, SALT_ROUNDS);
+    await pool.query("UPDATE users SET password = ? WHERE id = ?", [hashed, req.user.id]);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error cambiando contraseña:", err);
+    res.status(500).json({ ok: false, error: "Error interno del servidor" });
+  }
+};
+
+const deleteAccount = async (req, res) => {
+  try {
+    const { password } = req.body;
+    if (!password) {
+      return res.status(400).json({ ok: false, error: "Debes confirmar con tu contraseña" });
+    }
+
+    const [rows] = await pool.query("SELECT password FROM users WHERE id = ?", [req.user.id]);
+    if (rows.length === 0) return res.status(404).json({ ok: false, error: "Usuario no encontrado" });
+
+    const valid = await bcrypt.compare(password, rows[0].password);
+    if (!valid) return res.status(401).json({ ok: false, error: "Contraseña incorrecta" });
+
+    await pool.query("DELETE FROM gmail_tokens WHERE user_id = ?", [req.user.id]);
+    await pool.query("DELETE FROM users WHERE id = ?", [req.user.id]);
+
+    res.json({ ok: true, message: "Cuenta eliminada correctamente" });
+  } catch (err) {
+    console.error("Error eliminando cuenta:", err);
+    res.status(500).json({ ok: false, error: "Error interno del servidor" });
+  }
+};
+
+module.exports = { register, login, me, updateProfile, changePassword, deleteAccount };

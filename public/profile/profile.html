@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAI — Mi perfil</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="profile.css" />
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar">
+    <div class="navbar__brand">
+      <a href="../index.html" class="navbar__brand-link">
+        <span class="navbar__logo">⬡</span>
+        <span class="navbar__name">NexusAI</span>
+      </a>
+    </div>
+    <ul class="navbar__links">
+      <li><a href="../index.html">Inicio</a></li>
+      <li><a href="../phone/phone.html">Teléfono</a></li>
+      <li><a href="../whatsapp.html">WhatsApp</a></li>
+      <li><a href="../gmail/gmail.html">Gmail</a></li>
+    </ul>
+    <button class="navbar__hamburger" id="hamburger" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ========== MAIN ========== -->
+  <main class="profile-page">
+
+    <!-- Header -->
+    <div class="profile-header">
+      <div class="profile-header__avatar" id="profileAvatar"></div>
+      <div class="profile-header__info">
+        <h1 class="profile-header__name" id="profileName">Cargando...</h1>
+        <p class="profile-header__email" id="profileEmail"></p>
+        <span class="profile-header__badge">Miembro desde: <span id="profileSince"></span></span>
+      </div>
+    </div>
+
+    <div class="profile-grid">
+
+      <!-- ===== Información personal ===== -->
+      <section class="profile-card">
+        <div class="profile-card__header">
+          <h2 class="profile-card__title">👤 Información personal</h2>
+        </div>
+        <div class="profile-card__body">
+          <div class="profile-field">
+            <label class="profile-field__label">Nombre</label>
+            <div class="profile-field__row">
+              <input type="text" id="inputName" class="profile-input" />
+              <button class="btn-profile btn-profile--save" id="btnSaveName">Guardar</button>
+            </div>
+            <p class="profile-field__feedback hidden" id="nameFeedback"></p>
+          </div>
+          <div class="profile-field">
+            <label class="profile-field__label">Email</label>
+            <input type="email" id="inputEmail" class="profile-input" disabled />
+            <p class="profile-field__hint">El email no se puede cambiar</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Servicios conectados ===== -->
+      <section class="profile-card">
+        <div class="profile-card__header">
+          <h2 class="profile-card__title">🔗 Servicios conectados</h2>
+        </div>
+        <div class="profile-card__body">
+          <div class="service-item">
+            <div class="service-item__info">
+              <span class="service-item__icon">📧</span>
+              <div>
+                <span class="service-item__name">Gmail</span>
+                <span class="service-item__status" id="gmailStatus">No conectado</span>
+              </div>
+            </div>
+            <button class="btn-profile btn-profile--danger" id="btnDisconnectGmail" style="display:none;">Desconectar</button>
+            <button class="btn-profile btn-profile--connect" id="btnConnectGmail" style="display:none;">Conectar</button>
+          </div>
+          <div class="service-item">
+            <div class="service-item__info">
+              <span class="service-item__icon">📞</span>
+              <div>
+                <span class="service-item__name">Teléfono</span>
+                <span class="service-item__status status--coming">Próximamente</span>
+              </div>
+            </div>
+          </div>
+          <div class="service-item">
+            <div class="service-item__info">
+              <span class="service-item__icon">💬</span>
+              <div>
+                <span class="service-item__name">WhatsApp</span>
+                <span class="service-item__status status--coming">Próximamente</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== Sesión y cuenta ===== -->
+      <section class="profile-card profile-card--danger">
+        <div class="profile-card__header">
+          <h2 class="profile-card__title">⚠️ Zona de peligro</h2>
+        </div>
+        <div class="profile-card__body">
+          <div class="danger-item">
+            <div>
+              <h3 class="danger-item__title">Cerrar sesión</h3>
+              <p class="danger-item__desc">Se cerrará tu sesión en este navegador</p>
+            </div>
+            <button class="btn-profile btn-profile--logout" id="btnLogout">Cerrar sesión</button>
+          </div>
+          <div class="danger-divider"></div>
+          <div class="danger-item">
+            <div>
+              <h3 class="danger-item__title">Eliminar cuenta</h3>
+              <p class="danger-item__desc">Se eliminarán todos tus datos permanentemente. Esta acción no se puede deshacer.</p>
+            </div>
+            <button class="btn-profile btn-profile--delete" id="btnDeleteAccount">Eliminar cuenta</button>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- ===== MODAL CONFIRMACIÓN ELIMINAR ===== -->
+  <div class="modal-overlay hidden" id="deleteModal">
+    <div class="modal-box">
+      <h3 class="modal-box__title">¿Estás seguro?</h3>
+      <p class="modal-box__desc">Introduce tu contraseña para confirmar la eliminación de tu cuenta. Esta acción es <strong>irreversible</strong>.</p>
+      <input type="password" id="deleteConfirmPass" class="profile-input" placeholder="Tu contraseña" />
+      <p class="profile-field__feedback hidden" id="deleteFeedback"></p>
+      <div class="modal-box__actions">
+        <button class="btn-profile btn-profile--cancel" id="btnCancelDelete">Cancelar</button>
+        <button class="btn-profile btn-profile--delete" id="btnConfirmDelete">Eliminar definitivamente</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="profile-page.js"></script>
+  <script src="../profile.js"></script>
+</body>
+</html>

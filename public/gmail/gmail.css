@@ -154,8 +154,11 @@
 .email-view__sender { font-weight: 600; font-size: 0.95rem; }
 .email-view__sender-email { font-size: 0.8rem; color: var(--text-secondary); }
 .email-view__date { font-size: 0.8rem; color: var(--text-secondary); }
-.email-view__body { font-size: 0.95rem; line-height: 1.75; color: var(--text-secondary); }
+.email-view__body { font-size: 0.95rem; line-height: 1.75; color: var(--text-secondary); overflow-x: auto; word-break: break-word; }
 .email-view__body p { margin-bottom: 1rem; }
+.email-view__body img { max-width: 100%; height: auto; border-radius: 6px; }
+.email-view__body table { max-width: 100%; border-collapse: collapse; }
+.email-view__body a { color: var(--accent-green); }
 
 .email-view__actions {
   display: flex; gap: 0.6rem; margin-top: 2rem; padding-top: 1.5rem;

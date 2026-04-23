@@ -177,6 +177,13 @@ const listMessages = async (req, res) => {
   }
 };
 
+// Helper: decode base64url from Gmail API
+function decodeBase64Url(data) {
+  // Gmail uses base64url encoding (RFC 4648 §5): replace - with +, _ with /
+  const base64 = data.replace(/-/g, "+").replace(/_/g, "/");
+  return Buffer.from(base64, "base64");
+}
+
 // GET /api/gmail/messages/:id — Leer un correo completo
 const getMessage = async (req, res) => {
   try {
@@ -195,27 +202,91 @@ const getMessage = async (req, res) => {
     const headers = detail.data.payload.headers;
     const getHeader = (name) => headers.find((h) => h.name === name)?.value || "";
 
-    // Extraer body (puede ser text/plain o text/html)
-    let body = "";
     const payload = detail.data.payload;
+    let htmlBody = "";
+    let textBody = "";
+    const cidMap = {}; // Content-ID -> { mimeType, attachmentId, data }
 
-    function extractBody(part) {
-      if (part.mimeType === "text/html" && part.body?.data) {
-        return Buffer.from(part.body.data, "base64").toString("utf-8");
-      }
-      if (part.mimeType === "text/plain" && part.body?.data && !body) {
-        return Buffer.from(part.body.data, "base64").toString("utf-8");
-      }
-      if (part.parts) {
-        for (const sub of part.parts) {
-          const result = extractBody(sub);
-          if (result) return result;
+    // Recursively extract body parts and CID image references
+    function extractParts(part) {
+      const mimeType = part.mimeType || "";
+
+      // Collect inline images (CID attachments)
+      if (mimeType.startsWith("image/") && part.body) {
+        const cidHeader = (part.headers || []).find(
+          (h) => h.name.toLowerCase() === "content-id"
+        );
+        if (cidHeader) {
+          const cid = cidHeader.value.replace(/^<|>$/g, "");
+          cidMap[cid] = {
+            mimeType,
+            attachmentId: part.body.attachmentId || null,
+            data: part.body.data || null,
+          };
         }
       }
-      return null;
+
+      // Extract HTML body
+      if (mimeType === "text/html" && part.body?.data) {
+        htmlBody = decodeBase64Url(part.body.data).toString("utf-8");
+      }
+
+      // Extract plain text body (fallback)
+      if (mimeType === "text/plain" && part.body?.data && !textBody) {
+        textBody = decodeBase64Url(part.body.data).toString("utf-8");
+      }
+
+      // Recurse into sub-parts
+      if (part.parts) {
+        for (const sub of part.parts) {
+          extractParts(sub);
+        }
+      }
     }
 
-    body = extractBody(payload) || detail.data.snippet || "";
+    extractParts(payload);
+
+    let body = htmlBody || textBody || detail.data.snippet || "";
+
+    // Resolve CID images — replace cid:xxx with inline base64 data URIs
+    const cidKeys = Object.keys(cidMap);
+    if (cidKeys.length > 0 && body) {
+      for (const cid of cidKeys) {
+        const img = cidMap[cid];
+        let base64Data = null;
+
+        if (img.data) {
+          // Data already inline in the part
+          base64Data = img.data.replace(/-/g, "+").replace(/_/g, "/");
+        } else if (img.attachmentId) {
+          // Fetch attachment data from Gmail API
+          try {
+            const att = await gmail.users.messages.attachments.get({
+              userId: "me",
+              messageId: req.params.id,
+              id: img.attachmentId,
+            });
+            if (att.data?.data) {
+              base64Data = att.data.data.replace(/-/g, "+").replace(/_/g, "/");
+            }
+          } catch (attErr) {
+            console.error("Error fetching CID attachment:", attErr.message);
+          }
+        }
+
+        if (base64Data) {
+          const dataUri = "data:" + img.mimeType + ";base64," + base64Data;
+          // Replace both src="cid:xxx" variants
+          body = body.replace(new RegExp('src="cid:' + cid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '"', "gi"), 'src="' + dataUri + '"');
+          body = body.replace(new RegExp("src='cid:" + cid.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + "'", "gi"), "src='" + dataUri + "'");
+        }
+      }
+    }
+
+    // If body is plain text, wrap in basic HTML
+    if (!htmlBody && textBody) {
+      body = "<pre style='white-space:pre-wrap;word-break:break-word;font-family:inherit;margin:0;'>" + textBody.replace(/</g, "&lt;").replace(/>/g, "&gt;") + "</pre>";
+    }
 
     // Marcar como leído
     await gmail.users.messages.modify({
