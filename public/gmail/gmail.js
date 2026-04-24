@@ -28,13 +28,20 @@
   var connectedEmail = document.getElementById("connectedEmail");
   var btnConnectGmail = document.getElementById("btnConnectGmail");
   var btnDisconnect  = document.getElementById("btnDisconnect");
+  var labelsPanel    = document.getElementById("labelsPanel");
+  var labelsList     = document.getElementById("labelsList");
+  var inboxTitle     = document.querySelector(".inbox-toolbar__title");
 
   // === State ===
   var currentFilter   = "all";
+  var currentLabel    = null;     // null = inbox, string = label name/id
+  var currentLabelName = "Bandeja de entrada";
+  var userLabels      = [];       // loaded from Gmail API
   var selectedEmailId = null;
   var selectedEmail   = null;
   var gmailConnected  = false;
   var emails          = [];
+  var weekEmailsCache = null; // cached week metadata for AI context
   var token           = localStorage.getItem("token");
 
   // === Auth helper ===
@@ -90,6 +97,9 @@
         connectedBar.classList.remove("hidden");
         connectedEmail.textContent = data.email;
         await loadRealEmails();
+        // Preload week emails metadata in background for AI context (lightweight)
+        loadWeekEmails();
+        loadLabels();
       } else {
         gmailConnected = false;
         connectBanner.classList.remove("hidden");
@@ -136,6 +146,67 @@
         console.error("Error desconectando:", err);
       }
     });
+  }
+
+  // === Load Gmail labels ===
+  async function loadLabels() {
+    try {
+      var res = await fetch("/api/gmail/labels", { headers: authHeaders() });
+      var data = await res.json();
+      if (data.ok) {
+        // Filter: only user-created labels (exclude system ones like INBOX, SENT, etc.)
+        var systemLabels = ["INBOX","SENT","DRAFT","TRASH","SPAM","STARRED","UNREAD","IMPORTANT","CATEGORY_PERSONAL","CATEGORY_SOCIAL","CATEGORY_PROMOTIONS","CATEGORY_UPDATES","CATEGORY_FORUMS","CHAT"];
+        userLabels = data.labels.filter(function (l) {
+          return systemLabels.indexOf(l.id) === -1;
+        });
+        renderLabels();
+      }
+    } catch (err) {
+      console.error("Error loading labels:", err);
+    }
+  }
+
+  function renderLabels() {
+    if (userLabels.length === 0) {
+      labelsPanel.classList.add("hidden");
+      return;
+    }
+    labelsPanel.classList.remove("hidden");
+
+    var html = '<button class="label-item' + (currentLabel === null ? ' active' : '') + '" data-label-id="">' +
+      '<span class="label-item__icon">📥</span><span class="label-item__name">Bandeja de entrada</span></button>';
+
+    userLabels.forEach(function (l) {
+      var isActive = currentLabel === l.id ? " active" : "";
+      html += '<button class="label-item' + isActive + '" data-label-id="' + l.id + '" data-label-name="' + l.name + '">' +
+        '<span class="label-item__icon">📁</span><span class="label-item__name">' + l.name + '</span></button>';
+    });
+
+    labelsList.innerHTML = html;
+
+    labelsList.querySelectorAll(".label-item").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var labelId = btn.dataset.labelId;
+        var labelName = btn.dataset.labelName || "Bandeja de entrada";
+        selectLabel(labelId || null, labelName);
+      });
+    });
+  }
+
+  async function selectLabel(labelId, labelName) {
+    currentLabel = labelId;
+    currentLabelName = labelName || "Bandeja de entrada";
+    inboxTitle.textContent = currentLabelName;
+    renderLabels();
+
+    if (!gmailConnected) return;
+
+    // Load emails filtered by label
+    if (labelId) {
+      await loadRealEmails("label:" + currentLabelName);
+    } else {
+      await loadRealEmails();
+    }
   }
 
   // === Load real emails from API ===
@@ -303,26 +374,51 @@
     }
   }
 
+  // === Load week emails metadata (background, cached) ===
+  async function loadWeekEmails() {
+    try {
+      console.log("Loading week emails...");
+      var res = await fetch("/api/gmail/week?days=3", { headers: authHeaders() });
+      var data = await res.json();
+      console.log("Week emails response:", res.status, data.ok, data.count);
+      if (data.ok) {
+        weekEmailsCache = data.emails;
+        console.log("Week emails cached:", data.count, "emails");
+      } else {
+        console.error("Week emails error:", data.error);
+      }
+    } catch (err) {
+      console.error("Error loading week emails:", err);
+    }
+  }
+
   // === AI API call ===
   async function callAiEmail(action, userMessage) {
     if (!token) {
       addAiBotMsg("Inicia sesión para usar la IA.");
       return;
     }
-    var emailData = {};
+    var payload = { action: action, userMessage: userMessage };
+
+    // Attach current email context if one is open
     if (selectedEmail) {
-      emailData = {
-        emailBody: selectedEmail.body || selectedEmail.preview,
-        emailSubject: selectedEmail.subject,
-        emailFrom: selectedEmail.sender + " <" + selectedEmail.email + ">",
-      };
+      payload.emailBody = selectedEmail.body || selectedEmail.preview;
+      payload.emailSubject = selectedEmail.subject;
+      payload.emailFrom = selectedEmail.sender + " <" + selectedEmail.email + ">";
     }
+
+    // Attach week emails for week-* actions or chat with week context
+    var needsWeek = action.startsWith("week") || action === "chat";
+    if (needsWeek && weekEmailsCache) {
+      payload.weekEmails = weekEmailsCache;
+    }
+
     addTypingIndicator();
     try {
       var res = await fetch("/api/ai/email", {
         method: "POST",
         headers: authHeaders(),
-        body: JSON.stringify(Object.assign({ action: action, userMessage: userMessage }, emailData)),
+        body: JSON.stringify(payload),
       });
       removeTypingIndicator();
       var data = await res.json();
@@ -336,6 +432,131 @@
       addAiBotMsg("⚠️ Error de conexión con la IA.");
       console.error("AI error:", err);
     }
+  }
+
+  // === AI Organize: ask AI for plan, show it, let user execute ===
+  async function callAiOrganize() {
+    if (!token) { addAiBotMsg("Inicia sesión para usar la IA."); return; }
+    if (!weekEmailsCache || weekEmailsCache.length === 0) {
+      addAiBotMsg("No hay emails cargados para organizar. Conecta tu Gmail primero.");
+      return;
+    }
+    addTypingIndicator();
+    try {
+      var res = await fetch("/api/ai/organize", {
+        method: "POST",
+        headers: authHeaders(),
+        body: JSON.stringify({ weekEmails: weekEmailsCache }),
+      });
+      removeTypingIndicator();
+      var data = await res.json();
+
+      if (!data.ok) {
+        addAiBotMsg("⚠️ " + (data.error || "Error al organizar"));
+        return;
+      }
+
+      if (!data.plan || data.plan.length === 0) {
+        addAiBotMsg(data.response || "No se pudo generar un plan de organización.");
+        return;
+      }
+
+      // Show the plan
+      var planHtml = "<strong>📂 Plan de organización (" + data.emailCount + " emails):</strong><br><br>";
+      data.plan.forEach(function (label) {
+        planHtml += "🏷️ <strong>" + label.name + "</strong> — " + label.emailIds.length + " emails<br>";
+      });
+      planHtml += "<br>" + (data.summary || "");
+      planHtml += '<br><br><button class="ai-execute-btn" id="btnExecuteOrganize">✅ Aplicar organización</button>';
+      planHtml += ' <button class="ai-cancel-btn" id="btnCancelOrganize">❌ Cancelar</button>';
+      addAiBotMsg(planHtml);
+
+      // Store plan for execution
+      window._aiOrganizePlan = data.plan;
+
+      // Attach event listeners after DOM update
+      setTimeout(function () {
+        var btnExec = document.getElementById("btnExecuteOrganize");
+        var btnCancel = document.getElementById("btnCancelOrganize");
+        if (btnExec) btnExec.addEventListener("click", executeOrganizePlan);
+        if (btnCancel) btnCancel.addEventListener("click", function () {
+          addAiBotMsg("Organización cancelada. Tus correos no se han movido.");
+          window._aiOrganizePlan = null;
+        });
+      }, 100);
+    } catch (err) {
+      removeTypingIndicator();
+      addAiBotMsg("⚠️ Error de conexión con la IA.");
+      console.error("Organize error:", err);
+    }
+  }
+
+  // Execute the organize plan: create labels + move emails
+  async function executeOrganizePlan() {
+    var plan = window._aiOrganizePlan;
+    if (!plan || plan.length === 0) {
+      addAiBotMsg("No hay plan para ejecutar.");
+      return;
+    }
+    addAiBotMsg("⏳ Creando carpetas y moviendo emails...");
+
+    var created = 0;
+    var moved = 0;
+    var errors = [];
+
+    for (var i = 0; i < plan.length; i++) {
+      var labelPlan = plan[i];
+      try {
+        // Create label
+        var labelRes = await fetch("/api/gmail/labels", {
+          method: "POST",
+          headers: authHeaders(),
+          body: JSON.stringify({ name: labelPlan.name }),
+        });
+        var labelData = await labelRes.json();
+
+        if (!labelData.ok) {
+          errors.push("No se pudo crear '" + labelPlan.name + "': " + (labelData.error || ""));
+          continue;
+        }
+        created++;
+
+        // Move emails to label
+        if (labelPlan.emailIds && labelPlan.emailIds.length > 0) {
+          var moveRes = await fetch("/api/gmail/move", {
+            method: "POST",
+            headers: authHeaders(),
+            body: JSON.stringify({
+              messageIds: labelPlan.emailIds,
+              labelId: labelData.label.id,
+              removeFromInbox: false,
+            }),
+          });
+          var moveData = await moveRes.json();
+          if (moveData.ok) {
+            moved += moveData.moved;
+          } else {
+            errors.push("Error moviendo emails a '" + labelPlan.name + "'");
+          }
+        }
+      } catch (err) {
+        errors.push("Error con '" + labelPlan.name + "': " + err.message);
+      }
+    }
+
+    // Report results
+    var resultHtml = "✅ <strong>Organización completada:</strong><br>";
+    resultHtml += "📁 " + created + " carpetas creadas<br>";
+    resultHtml += "📧 " + moved + " emails organizados<br>";
+    if (errors.length > 0) {
+      resultHtml += "<br>⚠️ Errores:<br>" + errors.join("<br>");
+    }
+    resultHtml += "<br><br>Los cambios se reflejan en tu Gmail real.";
+    addAiBotMsg(resultHtml);
+    window._aiOrganizePlan = null;
+
+    // Refresh inbox and labels
+    if (gmailConnected) { await loadRealEmails(); loadWeekEmails(); loadLabels(); }
   }
 
   // === Email actions ===
@@ -378,8 +599,11 @@
   btnRefresh.addEventListener("click", function () {
     btnRefresh.style.transform = "rotate(360deg)";
     setTimeout(function () { btnRefresh.style.transform = ""; }, 500);
-    if (gmailConnected) { loadRealEmails(); }
-    else { renderInbox(currentFilter, searchInput.value); }
+    if (gmailConnected) {
+      if (currentLabel) { loadRealEmails("label:" + currentLabelName); }
+      else { loadRealEmails(); }
+      loadLabels();
+    } else { renderInbox(currentFilter, searchInput.value); }
   });
 
   // === Compose ===
@@ -489,7 +713,16 @@
   }
 
   function formatAiText(text) {
-    return text.replace(/\n/g, "<br>").replace(/---/g, "<hr style='border-color:rgba(111,191,115,0.15);margin:0.5rem 0;'>");
+    return text
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")  // **bold**
+      .replace(/\*(.+?)\*/g, "<em>$1</em>")               // *italic*
+      .replace(/^### (.+)$/gm, "<strong style='font-size:1.05em'>$1</strong>") // ### heading
+      .replace(/^## (.+)$/gm, "<strong style='font-size:1.1em'>$1</strong>")   // ## heading
+      .replace(/^# (.+)$/gm, "<strong style='font-size:1.15em'>$1</strong>")   // # heading
+      .replace(/^- (.+)$/gm, "• $1")                      // - list items
+      .replace(/^\d+\.\s/gm, function(m) { return m; })   // numbered lists
+      .replace(/\n/g, "<br>")
+      .replace(/---/g, "<hr style='border-color:rgba(111,191,115,0.15);margin:0.5rem 0;'>");
   }
 
   // === AI send message ===
@@ -500,30 +733,43 @@
     aiInput.value = "";
     var lower = text.toLowerCase();
 
-    // Detect intent and route to appropriate AI action
-    if (lower.includes("resum")) {
-      if (selectedEmail) {
-        callAiEmail("summarize", text);
-      } else {
-        addAiBotMsg("No tienes ningún correo seleccionado. Haz clic en un correo de la bandeja y pídeme que lo resuma.");
-      }
+    // Week-level commands (work with cached metadata, no extra API calls)
+    var isWeekCmd = lower.includes("semana") || lower.includes("week") || lower.includes("últimos") || lower.includes("ultimos") || lower.includes("3 día") || lower.includes("3 dia") || lower.includes("recientes");
+    var isOrgCmd = lower.includes("organiz") || lower.includes("carpeta") || lower.includes("etiqueta") || lower.includes("label") || lower.includes("clasific");
+    var isImportantCmd = lower.includes("important") || lower.includes("urgent") || lower.includes("priorit") || lower.includes("pendiente");
+
+    if (isWeekCmd && isOrgCmd) {
+      if (!weekEmailsCache) { addAiBotMsg("Conecta tu Gmail para que pueda analizar tus emails recientes."); return; }
+      callAiOrganize();
     }
-    else if (lower.includes("clasific") || lower.includes("organiz")) {
-      if (selectedEmail) {
-        callAiEmail("classify", text);
-      } else {
-        addAiBotMsg("Selecciona un correo para que pueda clasificarlo.");
-      }
+    else if (isWeekCmd && isImportantCmd) {
+      if (!weekEmailsCache) { addAiBotMsg("Conecta tu Gmail para que pueda analizar tus emails recientes."); return; }
+      callAiEmail("week-important", text);
+    }
+    else if (isWeekCmd && lower.includes("resum")) {
+      if (!weekEmailsCache) { addAiBotMsg("Conecta tu Gmail para que pueda analizar tus emails recientes."); return; }
+      callAiEmail("week-summary", text);
+    }
+    else if (isWeekCmd) {
+      if (!weekEmailsCache) { addAiBotMsg("Conecta tu Gmail para que pueda analizar tus emails recientes."); return; }
+      callAiEmail("week-summary", text);
+    }
+    // Single email commands (need a selected email)
+    else if (lower.includes("resum")) {
+      if (selectedEmail) { callAiEmail("summarize", text); }
+      else { addAiBotMsg("Selecciona un correo o pídeme un resumen de los últimos días."); }
+    }
+    else if (isOrgCmd) {
+      if (weekEmailsCache) { callAiOrganize(); }
+      else if (selectedEmail) { callAiEmail("classify", text); }
+      else { addAiBotMsg("Selecciona un correo para clasificarlo o conecta Gmail para organizar tus emails."); }
     }
     else if (lower.includes("responder") || lower.includes("respuesta") || lower.includes("reply") || lower.includes("redact")) {
-      if (selectedEmail) {
-        callAiEmail("reply", text);
-      } else {
-        addAiBotMsg("Selecciona primero un correo para que pueda sugerirte una respuesta.");
-      }
+      if (selectedEmail) { callAiEmail("reply", text); }
+      else { addAiBotMsg("Selecciona primero un correo para que pueda sugerirte una respuesta."); }
     }
     else {
-      // General chat — send with email context if available
+      // General chat — includes week context if available
       callAiEmail("chat", text);
     }
   }
@@ -533,9 +779,16 @@
   quickActions.forEach(function (btn) {
     btn.addEventListener("click", function () {
       var action = btn.dataset.action;
+      if (action === "week-organize") {
+        addAiUserMsg("Organiza mis emails recientes en carpetas");
+        callAiOrganize();
+        return;
+      }
       if (action === "summarize") aiInput.value = "Resume el correo seleccionado";
       else if (action === "reply") aiInput.value = "Sugiere una respuesta para el correo seleccionado";
       else if (action === "classify") aiInput.value = "Clasifica y organiza mi bandeja de entrada";
+      else if (action === "week-summary") aiInput.value = "Resume mis emails de los últimos días";
+      else if (action === "week-important") aiInput.value = "Cuáles son los emails más importantes de los últimos días";
       sendAiMessage();
     });
   });

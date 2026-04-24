@@ -75,6 +75,33 @@
 }
 .gmail-connect-banner.hidden, .gmail-connected-bar.hidden { display: none; }
 
+/* Labels / Folders panel */
+.inbox-labels {
+  padding: 0.4rem 0.8rem;
+  border-bottom: 1px solid rgba(111, 191, 115, 0.08);
+  display: flex; flex-direction: column; gap: 0.15rem;
+  max-height: 180px; overflow-y: auto;
+}
+.inbox-labels.hidden { display: none; }
+.inbox-labels__list { display: flex; flex-direction: column; gap: 0.1rem; }
+.label-item {
+  display: flex; align-items: center; gap: 0.5rem;
+  padding: 0.35rem 0.6rem; border-radius: 6px;
+  font-size: 0.82rem; color: var(--text-secondary);
+  cursor: pointer; transition: background var(--transition), color var(--transition);
+  border: none; background: none; width: 100%; text-align: left;
+  font-family: var(--font);
+}
+.label-item:hover { background: rgba(111,191,115,0.08); color: var(--text-primary); }
+.label-item.active { background: rgba(111,191,115,0.12); color: var(--accent-green); font-weight: 600; }
+.label-item__icon { font-size: 0.9rem; width: 1.2rem; text-align: center; }
+.label-item__name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.label-item__count {
+  font-size: 0.72rem; background: rgba(111,191,115,0.12);
+  color: var(--accent-green); padding: 0.1rem 0.4rem;
+  border-radius: 10px; font-weight: 600;
+}
+
 .inbox-tabs {
   display: flex; padding: 0 1.2rem; gap: 0.25rem;
   border-bottom: 1px solid rgba(111, 191, 115, 0.08);
@@ -280,6 +307,22 @@
   transition: background var(--transition), transform var(--transition);
 }
 .btn-compose-send:hover { background: #85d488; transform: translateY(-1px); }
+
+/* AI execute/cancel buttons inside chat */
+.ai-execute-btn, .ai-cancel-btn {
+  padding: 0.4rem 0.9rem; border-radius: 8px; font-family: var(--font);
+  font-size: 0.8rem; font-weight: 600; cursor: pointer; border: none;
+  transition: background var(--transition), transform var(--transition);
+  margin-top: 0.3rem;
+}
+.ai-execute-btn {
+  background: var(--accent-green); color: var(--bg-dark);
+}
+.ai-execute-btn:hover { background: #85d488; transform: translateY(-1px); }
+.ai-cancel-btn {
+  background: rgba(239, 68, 68, 0.15); color: #ef4444;
+}
+.ai-cancel-btn:hover { background: rgba(239, 68, 68, 0.25); }
 
 @media (max-width: 1100px) { .gmail-layout { grid-template-columns: 300px 1fr 300px; } }
 @media (max-width: 900px) {

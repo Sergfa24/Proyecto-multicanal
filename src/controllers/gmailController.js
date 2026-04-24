@@ -381,6 +381,156 @@ const toggleStar = async (req, res) => {
   }
 };
 
+// GET /api/gmail/week — Cargar metadatos de emails de los últimos 7 días
+const getWeekEmails = async (req, res) => {
+  try {
+    const auth = await getAuthenticatedClient(req.user.id);
+    if (!auth) {
+      return res.status(401).json({ ok: false, error: "Gmail no conectado" });
+    }
+
+    const gmail = google.gmail({ version: "v1", auth });
+    const daysBack = parseInt(req.query.days) || 7;
+    const dateFilter = new Date();
+    dateFilter.setDate(dateFilter.getDate() - daysBack);
+    const afterEpoch = Math.floor(dateFilter.getTime() / 1000);
+
+    // Fetch all message IDs from the period
+    let allMessageIds = [];
+    let pageToken = undefined;
+    do {
+      const listRes = await gmail.users.messages.list({
+        userId: "me",
+        q: `after:${afterEpoch}`,
+        maxResults: 100,
+        pageToken,
+      });
+      if (listRes.data.messages) {
+        allMessageIds = allMessageIds.concat(listRes.data.messages.map((m) => m.id));
+      }
+      pageToken = listRes.data.nextPageToken;
+    } while (pageToken && allMessageIds.length < 200); // cap at 200
+
+    if (allMessageIds.length === 0) {
+      return res.json({ ok: true, count: 0, emails: [] });
+    }
+
+    // Fetch metadata only (lightweight)
+    const emails = await Promise.all(
+      allMessageIds.map(async (id) => {
+        const detail = await gmail.users.messages.get({
+          userId: "me",
+          id,
+          format: "metadata",
+          metadataHeaders: ["From", "To", "Subject", "Date"],
+        });
+        const headers = detail.data.payload.headers;
+        const getHeader = (name) => headers.find((h) => h.name === name)?.value || "";
+        return {
+          id: detail.data.id,
+          from: getHeader("From"),
+          to: getHeader("To"),
+          subject: getHeader("Subject"),
+          date: getHeader("Date"),
+          snippet: detail.data.snippet,
+          unread: detail.data.labelIds?.includes("UNREAD") || false,
+          starred: detail.data.labelIds?.includes("STARRED") || false,
+          labels: detail.data.labelIds || [],
+        };
+      })
+    );
+
+    res.json({ ok: true, count: emails.length, emails });
+  } catch (err) {
+    console.error("Error cargando emails semanales:", err.message);
+    res.status(500).json({ ok: false, error: "Error al cargar emails" });
+  }
+};
+
+// GET /api/gmail/labels — Listar etiquetas del usuario
+const listLabels = async (req, res) => {
+  try {
+    const auth = await getAuthenticatedClient(req.user.id);
+    if (!auth) {
+      return res.status(401).json({ ok: false, error: "Gmail no conectado" });
+    }
+    const gmail = google.gmail({ version: "v1", auth });
+    const result = await gmail.users.labels.list({ userId: "me" });
+    const labels = (result.data.labels || [])
+      .filter((l) => l.type === "user")
+      .map((l) => ({ id: l.id, name: l.name }));
+    res.json({ ok: true, labels });
+  } catch (err) {
+    console.error("Error listando labels:", err.message);
+    res.status(500).json({ ok: false, error: "Error al listar etiquetas" });
+  }
+};
+
+// POST /api/gmail/labels — Crear una nueva etiqueta
+const createLabel = async (req, res) => {
+  try {
+    const auth = await getAuthenticatedClient(req.user.id);
+    if (!auth) {
+      return res.status(401).json({ ok: false, error: "Gmail no conectado" });
+    }
+    const { name } = req.body;
+    if (!name) {
+      return res.status(400).json({ ok: false, error: "Falta el nombre de la etiqueta" });
+    }
+    const gmail = google.gmail({ version: "v1", auth });
+    const result = await gmail.users.labels.create({
+      userId: "me",
+      requestBody: {
+        name,
+        labelListVisibility: "labelShow",
+        messageListVisibility: "show",
+      },
+    });
+    res.json({ ok: true, label: { id: result.data.id, name: result.data.name } });
+  } catch (err) {
+    console.error("Error creando label:", err.message);
+    res.status(500).json({ ok: false, error: "Error al crear etiqueta" });
+  }
+};
+
+// POST /api/gmail/move — Mover emails a una etiqueta
+const moveToLabel = async (req, res) => {
+  try {
+    const auth = await getAuthenticatedClient(req.user.id);
+    if (!auth) {
+      return res.status(401).json({ ok: false, error: "Gmail no conectado" });
+    }
+    const { messageIds, labelId, removeFromInbox } = req.body;
+    if (!messageIds || !labelId) {
+      return res.status(400).json({ ok: false, error: "Faltan messageIds o labelId" });
+    }
+    const gmail = google.gmail({ version: "v1", auth });
+    const addLabelIds = [labelId];
+    const removeLabelIds = removeFromInbox ? ["INBOX"] : [];
+
+    let moved = 0;
+    let errors = 0;
+    for (const msgId of messageIds) {
+      try {
+        await gmail.users.messages.modify({
+          userId: "me",
+          id: msgId,
+          requestBody: { addLabelIds, removeLabelIds },
+        });
+        moved++;
+      } catch (moveErr) {
+        errors++;
+        console.warn("No se pudo mover email " + msgId + ":", moveErr.message);
+      }
+    }
+
+    res.json({ ok: true, moved, errors });
+  } catch (err) {
+    console.error("Error moviendo emails:", err.message);
+    res.status(500).json({ ok: false, error: "Error al mover emails" });
+  }
+};
+
 // DELETE /api/gmail/disconnect — Desconectar Gmail
 const disconnect = async (req, res) => {
   try {
@@ -392,4 +542,4 @@ const disconnect = async (req, res) => {
   }
 };
 
-module.exports = { authUrl, callback, status, listMessages, getMessage, sendMessage, toggleStar, disconnect };
+module.exports = { authUrl, callback, status, listMessages, getMessage, sendMessage, toggleStar, getWeekEmails, listLabels, createLabel, moveToLabel, disconnect };

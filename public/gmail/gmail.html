@@ -57,6 +57,9 @@
         <span>📧 <span id="connectedEmail"></span></span>
         <button class="btn-icon" id="btnDisconnect" title="Desconectar">✕</button>
       </div>
+      <div class="inbox-labels hidden" id="labelsPanel">
+        <div class="inbox-labels__list" id="labelsList"></div>
+      </div>
       <div class="inbox-tabs">
         <button class="inbox-tab active" data-tab="all">Todos</button>
         <button class="inbox-tab" data-tab="unread">No leídos</button>
@@ -87,22 +90,26 @@
         <div class="ai-msg ai-msg--bot">
           <div class="ai-msg__avatar">🤖</div>
           <div class="ai-msg__bubble">
-            ¡Hola! Soy tu asistente de correo. Puedo ayudarte a:
+            ¡Hola! Soy tu asistente de correo con IA. Puedo:
             <ul>
-              <li>Resumir correos largos</li>
-              <li>Redactar respuestas</li>
-              <li>Clasificar y organizar tu bandeja</li>
-              <li>Buscar información en tus emails</li>
+              <li><strong>Resumir</strong> un correo o los últimos días</li>
+              <li><strong>Redactar</strong> respuestas profesionales</li>
+              <li><strong>Identificar</strong> emails importantes y urgentes</li>
+              <li><strong>Organizar</strong> tu bandeja en carpetas</li>
+              <li><strong>Responder</strong> preguntas sobre tus correos</li>
             </ul>
-            ¿En qué te puedo ayudar?
+            Prueba: <em>"Resume mis emails de los últimos días"</em>
           </div>
         </div>
       </div>
       <div class="ai-input-area">
         <div class="ai-quick-actions" id="quickActions">
-          <button class="ai-quick-btn" data-action="summarize">Resumir correo</button>
-          <button class="ai-quick-btn" data-action="reply">Sugerir respuesta</button>
-          <button class="ai-quick-btn" data-action="classify">Clasificar bandeja</button>
+          <button class="ai-quick-btn" data-action="summarize">📝 Resumir correo</button>
+          <button class="ai-quick-btn" data-action="reply">↩ Sugerir respuesta</button>
+          <button class="ai-quick-btn" data-action="classify">🏷️ Clasificar</button>
+          <button class="ai-quick-btn" data-action="week-summary">📅 Resumen 3 días</button>
+          <button class="ai-quick-btn" data-action="week-important">⭐ Importantes</button>
+          <button class="ai-quick-btn" data-action="week-organize">📂 Organizar</button>
         </div>
         <div class="ai-input-row">
           <input type="text" id="aiInput" class="ai-input" placeholder="Escribe un mensaje..." />

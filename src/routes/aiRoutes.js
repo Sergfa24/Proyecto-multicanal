@@ -6,5 +6,6 @@ const { verifyToken } = require("../middleware/authMiddleware");
 router.post("/email", verifyToken, aiController.analyzeEmail);
 router.post("/call", verifyToken, aiController.analyzeCall);
 router.post("/general", verifyToken, aiController.generalChat);
+router.post("/organize", verifyToken, aiController.organizeEmails);
 
 module.exports = router;
