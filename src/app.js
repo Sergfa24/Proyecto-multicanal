@@ -45,5 +45,10 @@ const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, async () => {
   console.log(`Servidor iniciado en http://localhost:${PORT}`);
-  await initMySQL();
+  try {
+    await initMySQL();
+  } catch (err) {
+    console.error("No se pudo inicializar MySQL. El servidor se detendrá.");
+    process.exit(1);
+  }
 });

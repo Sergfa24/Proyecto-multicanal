@@ -169,7 +169,7 @@ const deleteAccount = async (req, res) => {
     const valid = await bcrypt.compare(password, rows[0].password);
     if (!valid) return res.status(401).json({ ok: false, error: "Contraseña incorrecta" });
 
-    await pool.query("DELETE FROM gmail_tokens WHERE user_id = ?", [req.user.id]);
+    // gmail_tokens are deleted automatically via ON DELETE CASCADE
     await pool.query("DELETE FROM users WHERE id = ?", [req.user.id]);
 
     res.json({ ok: true, message: "Cuenta eliminada correctamente" });

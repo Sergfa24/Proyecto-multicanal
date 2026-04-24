@@ -44,6 +44,27 @@
   var weekEmailsCache = null; // cached week metadata for AI context
   var token           = localStorage.getItem("token");
 
+  // === HTML security helpers ===
+  function escapeHtml(str) {
+    if (!str) return "";
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  function sanitizeHtml(html) {
+    if (!html) return "";
+    // Strip script tags and their content
+    html = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, "");
+    // Strip event handler attributes (on*)
+    html = html.replace(/\s+on\w+\s*=\s*(["'])[\s\S]*?\1/gi, "");
+    html = html.replace(/\s+on\w+\s*=\s*[^\s>]+/gi, "");
+    // Strip javascript: URLs
+    html = html.replace(/href\s*=\s*(["'])\s*javascript:[\s\S]*?\1/gi, 'href=$1#$1');
+    html = html.replace(/src\s*=\s*(["'])\s*javascript:[\s\S]*?\1/gi, 'src=$1#$1');
+    // Strip <embed>, <object>, <iframe>, <form>, <meta>, <link> tags
+    html = html.replace(/<\/?(embed|object|iframe|form|meta|link|base)(\s[^>]*)?\/?>([\s\S]*?<\/\1>)?/gi, "");
+    return html;
+  }
+
   // === Auth helper ===
   function authHeaders() {
     return { "Authorization": "Bearer " + token, "Content-Type": "application/json" };
@@ -178,8 +199,8 @@
 
     userLabels.forEach(function (l) {
       var isActive = currentLabel === l.id ? " active" : "";
-      html += '<button class="label-item' + isActive + '" data-label-id="' + l.id + '" data-label-name="' + l.name + '">' +
-        '<span class="label-item__icon">📁</span><span class="label-item__name">' + l.name + '</span></button>';
+      html += '<button class="label-item' + isActive + '" data-label-id="' + escapeHtml(l.id) + '" data-label-name="' + escapeHtml(l.name) + '">' +
+        '<span class="label-item__icon">📁</span><span class="label-item__name">' + escapeHtml(l.name) + '</span></button>';
     });
 
     labelsList.innerHTML = html;
@@ -274,14 +295,14 @@
       var classes = "email-item";
       if (email.unread) classes += " unread";
       if (email.id === selectedEmailId) classes += " active";
-      return '<div class="' + classes + '" data-id="' + email.id + '">' +
-        '<div class="email-item__avatar">' + initials + '</div>' +
+      return '<div class="' + classes + '" data-id="' + escapeHtml(email.id) + '">' +
+        '<div class="email-item__avatar">' + escapeHtml(initials) + '</div>' +
         '<div class="email-item__content">' +
-          '<div class="email-item__header"><span class="email-item__sender">' + email.sender + '</span><span class="email-item__time">' + email.time + '</span></div>' +
-          '<div class="email-item__subject">' + email.subject + '</div>' +
-          '<div class="email-item__preview">' + email.preview + '</div>' +
+          '<div class="email-item__header"><span class="email-item__sender">' + escapeHtml(email.sender) + '</span><span class="email-item__time">' + escapeHtml(email.time) + '</span></div>' +
+          '<div class="email-item__subject">' + escapeHtml(email.subject) + '</div>' +
+          '<div class="email-item__preview">' + escapeHtml(email.preview) + '</div>' +
         '</div>' +
-        '<button class="email-item__star' + (email.starred ? ' starred' : '') + '" data-star="' + email.id + '">' + (email.starred ? '★' : '☆') + '</button>' +
+        '<button class="email-item__star' + (email.starred ? ' starred' : '') + '" data-star="' + escapeHtml(email.id) + '">' + (email.starred ? '★' : '☆') + '</button>' +
       '</div>';
     }).join("");
 
@@ -330,17 +351,17 @@
     emailDetail.innerHTML =
       '<div class="email-view">' +
         '<div class="email-view__header">' +
-          '<h1 class="email-view__subject">' + email.subject + '</h1>' +
+          '<h1 class="email-view__subject">' + escapeHtml(email.subject) + '</h1>' +
           '<div class="email-view__meta">' +
-            '<div class="email-view__avatar">' + initials + '</div>' +
+            '<div class="email-view__avatar">' + escapeHtml(initials) + '</div>' +
             '<div class="email-view__meta-info">' +
-              '<div class="email-view__sender">' + email.sender + '</div>' +
-              '<div class="email-view__sender-email">&lt;' + email.email + '&gt;</div>' +
+              '<div class="email-view__sender">' + escapeHtml(email.sender) + '</div>' +
+              '<div class="email-view__sender-email">&lt;' + escapeHtml(email.email) + '&gt;</div>' +
             '</div>' +
-            '<div class="email-view__date">' + email.date + ' · ' + email.time + '</div>' +
+            '<div class="email-view__date">' + escapeHtml(email.date) + ' · ' + escapeHtml(email.time) + '</div>' +
           '</div>' +
         '</div>' +
-        '<div class="email-view__body">' + (email.body || email.preview) + '</div>' +
+        '<div class="email-view__body">' + sanitizeHtml(email.body || email.preview) + '</div>' +
         '<div class="email-view__actions">' +
           '<button class="btn-email-action" data-action="reply">↩ Responder</button>' +
           '<button class="btn-email-action" data-action="forward">↪ Reenviar</button>' +
@@ -685,7 +706,7 @@
   function addAiUserMsg(text) {
     var div = document.createElement("div");
     div.className = "ai-msg ai-msg--user";
-    div.innerHTML = '<div class="ai-msg__avatar">Tú</div><div class="ai-msg__bubble">' + text + '</div>';
+    div.innerHTML = '<div class="ai-msg__avatar">Tú</div><div class="ai-msg__bubble">' + escapeHtml(text) + '</div>';
     aiMessages.appendChild(div);
     aiMessages.scrollTop = aiMessages.scrollHeight;
   }

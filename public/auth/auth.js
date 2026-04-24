@@ -5,6 +5,13 @@
 (function () {
   "use strict";
 
+  // Redirect early if already logged in
+  var existingToken = localStorage.getItem("token");
+  if (existingToken) {
+    window.location.href = "../index.html";
+    return;
+  }
+
   var loginForm      = document.getElementById("loginForm");
   var registerForm   = document.getElementById("registerForm");
   var formError      = document.getElementById("formError");
@@ -134,11 +141,6 @@
         setLoading(btn, false);
       }
     });
-  }
-
-  var token = localStorage.getItem("token");
-  if (token) {
-    window.location.href = "../index.html";
   }
 
 })();

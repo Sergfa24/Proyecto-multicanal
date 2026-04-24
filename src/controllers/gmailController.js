@@ -1,5 +1,7 @@
 const { google } = require("googleapis");
+const jwt = require("jsonwebtoken");
 const { pool } = require("../../db/mysql");
+const { JWT_SECRET } = require("../middleware/authMiddleware");
 
 const SCOPES = [
   "https://www.googleapis.com/auth/gmail.readonly",
@@ -22,7 +24,7 @@ const authUrl = (req, res) => {
     access_type: "offline",
     prompt: "consent",
     scope: SCOPES,
-    state: String(req.user.id),
+    state: jwt.sign({ uid: req.user.id }, JWT_SECRET, { expiresIn: "10m" }),
   });
   res.json({ ok: true, url });
 };
@@ -30,9 +32,20 @@ const authUrl = (req, res) => {
 // GET /api/gmail/callback — Google redirige aquí tras autorizar
 const callback = async (req, res) => {
   const { code, state } = req.query;
-  const userId = parseInt(state);
 
-  if (!code || !userId) {
+  if (!code || !state) {
+    return res.status(400).send("Faltan parámetros de autorización");
+  }
+
+  let userId;
+  try {
+    const decoded = jwt.verify(state, JWT_SECRET);
+    userId = decoded.uid;
+  } catch (err) {
+    return res.status(400).send("Estado de autorización inválido o expirado");
+  }
+
+  if (!userId) {
     return res.status(400).send("Faltan parámetros de autorización");
   }
 
@@ -87,11 +100,15 @@ async function getAuthenticatedClient(userId) {
 
   // Refrescar token si ha expirado
   oauth2Client.on("tokens", async (newTokens) => {
-    const newExpiry = new Date(newTokens.expiry_date);
-    await pool.query(
-      `UPDATE gmail_tokens SET access_token = ?, token_expiry = ? WHERE user_id = ?`,
-      [newTokens.access_token, newExpiry, userId]
-    );
+    try {
+      const newExpiry = new Date(newTokens.expiry_date);
+      await pool.query(
+        `UPDATE gmail_tokens SET access_token = ?, token_expiry = ? WHERE user_id = ?`,
+        [newTokens.access_token, newExpiry, userId]
+      );
+    } catch (err) {
+      console.error("Error actualizando token refrescado:", err.message);
+    }
   });
 
   return oauth2Client;
@@ -329,12 +346,16 @@ const sendMessage = async (req, res) => {
       return res.status(400).json({ ok: false, error: "Faltan campos (to, subject, body)" });
     }
 
+    // Sanitize header values to prevent header injection
+    const safeTo = to.replace(/[\r\n]/g, "");
+    const safeSubject = subject.replace(/[\r\n]/g, "");
+
     const gmail = google.gmail({ version: "v1", auth });
 
     // Construir el email en formato RFC 2822
     const email = [
-      `To: ${to}`,
-      `Subject: ${subject}`,
+      `To: ${safeTo}`,
+      `Subject: ${safeSubject}`,
       "MIME-Version: 1.0",
       "Content-Type: text/html; charset=UTF-8",
       "",
@@ -415,30 +436,36 @@ const getWeekEmails = async (req, res) => {
       return res.json({ ok: true, count: 0, emails: [] });
     }
 
-    // Fetch metadata only (lightweight)
-    const emails = await Promise.all(
-      allMessageIds.map(async (id) => {
-        const detail = await gmail.users.messages.get({
-          userId: "me",
-          id,
-          format: "metadata",
-          metadataHeaders: ["From", "To", "Subject", "Date"],
-        });
-        const headers = detail.data.payload.headers;
-        const getHeader = (name) => headers.find((h) => h.name === name)?.value || "";
-        return {
-          id: detail.data.id,
-          from: getHeader("From"),
-          to: getHeader("To"),
-          subject: getHeader("Subject"),
-          date: getHeader("Date"),
-          snippet: detail.data.snippet,
-          unread: detail.data.labelIds?.includes("UNREAD") || false,
-          starred: detail.data.labelIds?.includes("STARRED") || false,
-          labels: detail.data.labelIds || [],
-        };
-      })
-    );
+    // Fetch metadata in batches to avoid rate limit exhaustion
+    const BATCH_SIZE = 15;
+    const emails = [];
+    for (let i = 0; i < allMessageIds.length; i += BATCH_SIZE) {
+      const batch = allMessageIds.slice(i, i + BATCH_SIZE);
+      const batchResults = await Promise.all(
+        batch.map(async (id) => {
+          const detail = await gmail.users.messages.get({
+            userId: "me",
+            id,
+            format: "metadata",
+            metadataHeaders: ["From", "To", "Subject", "Date"],
+          });
+          const headers = detail.data.payload.headers;
+          const getHeader = (name) => headers.find((h) => h.name === name)?.value || "";
+          return {
+            id: detail.data.id,
+            from: getHeader("From"),
+            to: getHeader("To"),
+            subject: getHeader("Subject"),
+            date: getHeader("Date"),
+            snippet: detail.data.snippet,
+            unread: detail.data.labelIds?.includes("UNREAD") || false,
+            starred: detail.data.labelIds?.includes("STARRED") || false,
+            labels: detail.data.labelIds || [],
+          };
+        })
+      );
+      emails.push(...batchResults);
+    }
 
     res.json({ ok: true, count: emails.length, emails });
   } catch (err) {

@@ -41,7 +41,7 @@
     profileLi.innerHTML =
       '<a href="' + basePath + 'profile/profile.html" class="navbar__profile-btn" title="Mi perfil">' +
         '<span class="navbar__profile-avatar">' + initials + '</span>' +
-        '<span class="navbar__profile-name">' + escapeHtml(user.name.split(" ")[0]) + '</span>' +
+        '<span class="navbar__profile-name">' + escapeHtml((user.name || "").split(" ")[0]) + '</span>' +
       '</a>';
 
     navLinks.appendChild(profileLi);

@@ -9,10 +9,12 @@ const pool = mysql.createPool({
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-  ssl: {
-    minVersion: "TLSv1.2",
-    rejectUnauthorized: true,
-  },
+  ...(process.env.MYSQL_SSL === "true" ? {
+    ssl: {
+      minVersion: "TLSv1.2",
+      rejectUnauthorized: true,
+    },
+  } : {}),
 });
 
 async function initMySQL() {
@@ -49,6 +51,7 @@ async function initMySQL() {
   } catch (err) {
     console.error("Error conectando con MySQL:", err.message);
     console.error("Asegúrate de que el servidor MySQL está corriendo y las credenciales en .env son correctas.");
+    throw err;
   }
 }
 

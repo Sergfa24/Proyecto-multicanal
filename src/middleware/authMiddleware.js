@@ -1,13 +1,17 @@
 const jwt = require("jsonwebtoken");
 
-const JWT_SECRET = process.env.JWT_SECRET || "nexusai_default_secret_change_me";
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("FATAL: JWT_SECRET no está definido en las variables de entorno. Configúralo en el .env");
+  process.exit(1);
+}
 
 function verifyToken(req, res, next) {
   const authHeader = req.headers.authorization;
   const tokenFromCookie = req.headers.cookie
     ?.split("; ")
     .find((c) => c.startsWith("token="))
-    ?.split("=")[1];
+    ?.split("=").slice(1).join("=");
 
   const token = authHeader?.split(" ")[1] || tokenFromCookie;
 
