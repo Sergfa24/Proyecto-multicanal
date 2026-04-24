@@ -1,2 +1,13 @@
 node_modules/
 npm-debug.log
+
+# Entorno y secretos
+.env
+.env.local
+.env.production
+
+# Base de datos local
+db/*.db
+
+# Logs
+*.log
