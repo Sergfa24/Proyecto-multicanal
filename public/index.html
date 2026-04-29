@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAI — Tu asistente multicanal</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar">
+    <div class="navbar__brand">
+      <span class="navbar__logo">⬡</span>
+      <span class="navbar__name">NexusAI</span>
+    </div>
+    <ul class="navbar__links">
+      <li><a href="#servicios">Servicios</a></li>
+      <li><a href="#como-funciona">Cómo funciona</a></li>
+      <li><a href="auth/login.html" class="navbar__cta">Acceder</a></li>
+    </ul>
+    <button class="navbar__hamburger" id="hamburger" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ========== HERO BANNER / CAROUSEL ========== -->
+  <section class="hero">
+    <div class="carousel" id="carousel">
+
+      <!-- Slide 1 — WhatsApp -->
+      <div class="carousel__slide active">
+        <div class="carousel__content">
+          <span class="carousel__badge">WhatsApp</span>
+          <h1>Controla tu WhatsApp con IA</h1>
+          <p>Responde mensajes, organiza conversaciones y automatiza respuestas desde un solo lugar. Tu asistente siempre disponible.</p>
+        </div>
+        <div class="carousel__image-placeholder">
+          <div class="placeholder-icon">💬</div>
+          <span class="placeholder-label">Imagen WhatsApp</span>
+        </div>
+      </div>
+
+      <!-- Slide 2 — Teléfono -->
+      <div class="carousel__slide">
+        <div class="carousel__content">
+          <span class="carousel__badge">Teléfono</span>
+          <h1>Tu teléfono, gestionado por IA</h1>
+          <p>Registra llamadas, programa recordatorios y deja que la inteligencia artificial gestione tu agenda telefónica.</p>
+        </div>
+        <div class="carousel__image-placeholder">
+          <div class="placeholder-icon">📞</div>
+          <span class="placeholder-label">Imagen Teléfono</span>
+        </div>
+      </div>
+
+      <!-- Slide 3 — Gmail -->
+      <div class="carousel__slide">
+        <div class="carousel__content">
+          <span class="carousel__badge">Gmail</span>
+          <h1>Gmail inteligente con IA</h1>
+          <p>Lee, clasifica y responde correos automáticamente. La IA aprende tu estilo y se encarga del trabajo pesado.</p>
+        </div>
+        <div class="carousel__image-placeholder">
+          <div class="placeholder-icon">✉️</div>
+          <span class="placeholder-label">Imagen Gmail</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Indicators -->
+    <div class="carousel__indicators">
+      <button class="indicator active" data-index="0" aria-label="Slide 1"></button>
+      <button class="indicator" data-index="1" aria-label="Slide 2"></button>
+      <button class="indicator" data-index="2" aria-label="Slide 3"></button>
+    </div>
+  </section>
+
+  <!-- ========== ACCEDER (CTA) ========== -->
+  <section class="cta-section">
+    <a href="auth/login.html" class="btn-acceder" id="btnAcceder">Acceder</a>
+    <p class="cta-sub">Inicia sesión con tu Gmail y contraseña para empezar</p>
+  </section>
+
+  <!-- ========== SERVICIOS ========== -->
+  <section class="servicios" id="servicios">
+    <h2 class="section-title">Nuestros servicios</h2>
+    <p class="section-subtitle">Conecta todos tus canales y deja que la IA trabaje por ti</p>
+
+    <div class="servicios__grid">
+
+      <!-- Card WhatsApp -->
+      <a href="whatsapp.html" class="servicio-card servicio-card--link">
+        <div class="servicio-card__img">
+          <div class="placeholder-icon">💬</div>
+          <span class="placeholder-label">Imagen WhatsApp</span>
+        </div>
+        <div class="servicio-card__body">
+          <h3>WhatsApp AI</h3>
+          <p>Conecta tu número de WhatsApp y deja que NexusAI responda, clasifique y gestione tus conversaciones automáticamente. Ideal para atención al cliente, ventas y soporte.</p>
+        </div>
+      </a>
+
+      <!-- Card Teléfono -->
+      <a href="phone/phone.html" class="servicio-card servicio-card--link">
+        <div class="servicio-card__img">
+          <div class="placeholder-icon">📞</div>
+          <span class="placeholder-label">Imagen Teléfono</span>
+        </div>
+        <div class="servicio-card__body">
+          <h3>Teléfono AI</h3>
+          <p>Registra tu número de teléfono y deja que la IA gestione llamadas entrantes, cree resúmenes y programe seguimientos. Todo centralizado en un solo panel.</p>
+        </div>
+      </a>
+
+      <!-- Card Gmail -->
+      <a href="gmail/gmail.html" class="servicio-card servicio-card--link">
+        <div class="servicio-card__img">
+          <div class="placeholder-icon">✉️</div>
+          <span class="placeholder-label">Imagen Gmail</span>
+        </div>
+        <div class="servicio-card__body">
+          <h3>Gmail AI</h3>
+          <p>Vincula tu cuenta de Gmail y la IA leerá, clasificará y responderá correos por ti. Aprende tu tono y estilo para que cada respuesta parezca tuya.</p>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- ========== CÓMO FUNCIONA ========== -->
+  <section class="como-funciona" id="como-funciona">
+    <h2 class="section-title">¿Cómo funciona?</h2>
+    <div class="pasos">
+      <div class="paso">
+        <div class="paso__num">1</div>
+        <h4>Crea tu cuenta</h4>
+        <p>Regístrate con tu Gmail y establece una contraseña segura.</p>
+      </div>
+      <div class="paso">
+        <div class="paso__num">2</div>
+        <h4>Conecta tus canales</h4>
+        <p>Vincula tu WhatsApp, teléfono y Gmail en pocos pasos.</p>
+      </div>
+      <div class="paso">
+        <div class="paso__num">3</div>
+        <h4>La IA se encarga</h4>
+        <p>NexusAI gestiona mensajes, llamadas y correos por ti, 24/7.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== FOOTER ========== -->
+  <footer class="footer">
+    <p>&copy; 2026 NexusAI — Tu asistente multicanal con inteligencia artificial</p>
+  </footer>
+
+  <script src="main.js"></script>
+  <script src="profile.js"></script>
+</body>
+</html>

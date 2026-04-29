@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NexusAI — Teléfono AI</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <link rel="stylesheet" href="phone.css" />
+</head>
+<body>
+
+  <!-- ========== NAVBAR ========== -->
+  <nav class="navbar">
+    <div class="navbar__brand">
+      <a href="../index.html" class="navbar__brand-link">
+        <span class="navbar__logo">⬡</span>
+        <span class="navbar__name">NexusAI</span>
+      </a>
+    </div>
+    <ul class="navbar__links">
+      <li><a href="../index.html">Inicio</a></li>
+      <li><a href="phone.html" class="navbar__link--active">Teléfono</a></li>
+      <li><a href="../whatsapp.html">WhatsApp</a></li>
+      <li><a href="../gmail/gmail.html">Gmail</a></li>
+    </ul>
+    <button class="navbar__hamburger" id="hamburger" aria-label="Menú">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ========== MAIN LAYOUT ========== -->
+  <main class="phone-layout">
+
+    <!-- Left panel: Setup + Dialpad -->
+    <aside class="phone-sidebar">
+
+      <!-- Phone number setup -->
+      <div class="panel setup-panel">
+        <h2 class="panel__title">Tu número</h2>
+        <p class="panel__desc">Introduce tu número de teléfono para conectar las llamadas</p>
+        <div class="input-group">
+          <span class="input-prefix">+</span>
+          <input
+            type="tel"
+            id="phoneNumber"
+            class="input-phone"
+            placeholder="34 612 345 678"
+            maxlength="15"
+          />
+        </div>
+        <button class="btn-connect" id="btnConnect">Conectar</button>
+        <div class="connect-status" id="connectStatus">
+          <span class="status-dot"></span>
+          <span class="status-text">Desconectado</span>
+        </div>
+      </div>
+
+      <!-- Dialpad -->
+      <div class="panel dialpad-panel">
+        <div class="dial-display">
+          <input
+            type="tel"
+            id="dialInput"
+            class="dial-input"
+            placeholder="Marca un número..."
+            readonly
+          />
+          <button class="dial-clear" id="dialClear" aria-label="Borrar">&larr;</button>
+        </div>
+
+        <div class="dialpad" id="dialpad">
+          <button class="dialpad__key" data-value="1">
+            <span class="key-num">1</span>
+            <span class="key-sub">&nbsp;</span>
+          </button>
+          <button class="dialpad__key" data-value="2">
+            <span class="key-num">2</span>
+            <span class="key-sub">ABC</span>
+          </button>
+          <button class="dialpad__key" data-value="3">
+            <span class="key-num">3</span>
+            <span class="key-sub">DEF</span>
+          </button>
+          <button class="dialpad__key" data-value="4">
+            <span class="key-num">4</span>
+            <span class="key-sub">GHI</span>
+          </button>
+          <button class="dialpad__key" data-value="5">
+            <span class="key-num">5</span>
+            <span class="key-sub">JKL</span>
+          </button>
+          <button class="dialpad__key" data-value="6">
+            <span class="key-num">6</span>
+            <span class="key-sub">MNO</span>
+          </button>
+          <button class="dialpad__key" data-value="7">
+            <span class="key-num">7</span>
+            <span class="key-sub">PQRS</span>
+          </button>
+          <button class="dialpad__key" data-value="8">
+            <span class="key-num">8</span>
+            <span class="key-sub">TUV</span>
+          </button>
+          <button class="dialpad__key" data-value="9">
+            <span class="key-num">9</span>
+            <span class="key-sub">WXYZ</span>
+          </button>
+          <button class="dialpad__key" data-value="*">
+            <span class="key-num">*</span>
+            <span class="key-sub">&nbsp;</span>
+          </button>
+          <button class="dialpad__key" data-value="0">
+            <span class="key-num">0</span>
+            <span class="key-sub">+</span>
+          </button>
+          <button class="dialpad__key" data-value="#">
+            <span class="key-num">#</span>
+            <span class="key-sub">&nbsp;</span>
+          </button>
+        </div>
+
+        <div class="dial-actions">
+          <button class="btn-call btn-call--start" id="btnCall" disabled>
+            <span class="call-icon">📞</span> Llamar
+          </button>
+          <button class="btn-call btn-call--end hidden" id="btnHangup">
+            <span class="call-icon">📵</span> Colgar
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Right panel: Active call + History -->
+    <section class="phone-main">
+
+      <!-- Active call card -->
+      <div class="panel call-panel hidden" id="callPanel">
+        <div class="call-active">
+          <div class="call-active__avatar">📞</div>
+          <h3 class="call-active__number" id="callNumber">+34 612 345 678</h3>
+          <p class="call-active__status" id="callStatus">Conectando...</p>
+          <p class="call-active__timer" id="callTimer">00:00</p>
+          <div class="call-active__controls">
+            <button class="call-ctrl" id="btnMute" title="Silenciar">
+              <span>🎤</span>
+              <small>Mute</small>
+            </button>
+            <button class="call-ctrl" id="btnHold" title="En espera">
+              <span>⏸️</span>
+              <small>Espera</small>
+            </button>
+            <button class="call-ctrl call-ctrl--end" id="btnHangup2" title="Colgar">
+              <span>📵</span>
+              <small>Colgar</small>
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- AI Chatbox for calls -->
+      <div class="panel ai-panel">
+        <h2 class="panel__title">🤖 Asistente IA — Llamadas</h2>
+        <div class="ai-chat">
+          <div class="ai-messages" id="aiMessages">
+            <div class="ai-msg ai-msg--bot">
+              <div class="ai-msg__avatar">🤖</div>
+              <div class="ai-msg__bubble">¡Hola! Soy tu asistente de telefonía. Puedo ayudarte a analizar llamadas, resumir conversaciones o darte información sobre tu historial. Selecciona una llamada del historial o pregúntame algo.</div>
+            </div>
+          </div>
+          <div class="ai-quick-actions">
+            <button class="ai-quick-btn" data-action="summarize">📝 Resumir</button>
+            <button class="ai-quick-btn" data-action="analyze">📊 Analizar</button>
+          </div>
+          <div class="ai-input-row">
+            <input type="text" class="ai-input" id="aiInput" placeholder="Pregunta algo sobre tus llamadas..." />
+            <button class="ai-send" id="btnSendAi">➤</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Incoming call overlay -->
+      <div class="incoming-call hidden" id="incomingCall">
+        <div class="incoming-call__card">
+          <div class="incoming-call__pulse"></div>
+          <div class="incoming-call__avatar">📲</div>
+          <h3 class="incoming-call__number" id="incomingNumber">+34 XXX XXX XXX</h3>
+          <p>Llamada entrante</p>
+          <div class="incoming-call__actions">
+            <button class="btn-call btn-call--start" id="btnAnswer">Contestar</button>
+            <button class="btn-call btn-call--end" id="btnReject">Rechazar</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Call history -->
+      <div class="panel history-panel">
+        <h2 class="panel__title">Historial de llamadas</h2>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">
+            <span class="history-empty__icon">📋</span>
+            <p>No hay llamadas registradas todavía</p>
+            <small>Las llamadas realizadas y recibidas aparecerán aquí</small>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Twilio Voice SDK (CDN) -->
+  <script src="https://sdk.twilio.com/js/client/v1.14/twilio.min.js"></script>
+  <script src="phone.js"></script>
+  <script src="../profile.js"></script>
+</body>
+</html>
