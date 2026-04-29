@@ -26,8 +26,10 @@ client.on('message', async msg => {
 
     const reply = response.data.reply || 'Sin respuesta';
     await msg.reply(reply);
+  
   } catch (error) {
-    console.log('Error enviando a n8n:', error.message);
+    console.log('Error enviando a n8n:', error.response?.status || error.code || error.message);
+    console.log(error.response?.data || '');
   }
 });
 
